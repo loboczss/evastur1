@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import AddPackageModal from './AddPackageModal';
 

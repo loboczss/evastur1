@@ -85,8 +85,9 @@ export default function AddPackageModal({ open, onClose }: { open: boolean; onCl
       // opcional: recarregar lista da página /pacotes (se ela usar SWR/ReactQuery, basta invalidar)
       // por enquanto, um refresh simples:
       location.reload();
-    } catch (e: any) {
-      alert(e.message || 'Erro');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro';
+      alert(message || 'Erro');
     } finally {
       setSaving(false);
     }

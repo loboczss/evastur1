@@ -2,22 +2,53 @@
 
 import { useEffect, useState } from 'react';
 
+type Permission = {
+  id: number;
+  key: string;
+  description: string | null;
+};
+
+type RolePermission = {
+  permission: Permission;
+};
+
+type Role = {
+  id: number;
+  name: string;
+  description: string | null;
+  permissions: RolePermission[];
+};
+
 export default function RoleManager() {
-  const [roles, setRoles] = useState<any[]>([]);
-  const [permissions, setPermissions] = useState<any[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [form, setForm] = useState({ name: '', description: '', permissionIds: [] as number[] });
 
   // Carregar papéis e permissões
   useEffect(() => {
-    fetch('/api/admin/roles')
-      .then((res) => res.json())
-      .then(setRoles)
-      .catch(console.error);
-
-    fetch('/api/admin/permissions')
-      .then((res) => res.json())
-      .then(setPermissions)
-      .catch(console.error);
+    let active = true;
+    (async () => {
+      try {
+        const [roleRes, permRes] = await Promise.all([
+          fetch('/api/admin/roles'),
+          fetch('/api/admin/permissions'),
+        ]);
+        if (!roleRes.ok || !permRes.ok) throw new Error('Falha ao carregar dados');
+        const [roleData, permData] = (await Promise.all([
+          roleRes.json(),
+          permRes.json(),
+        ])) as [Role[], Permission[]];
+        if (active) {
+          setRoles(roleData);
+          setPermissions(permData);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const togglePermission = (id: number) => {
@@ -34,14 +65,23 @@ export default function RoleManager() {
 
   // Criar papel
   const createRole = async () => {
-    const res = await fetch('/api/admin/roles', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    const newRole = await res.json();
-    setRoles((prev) => [...prev, newRole]);
-    setForm({ name: '', description: '', permissionIds: [] });
+    try {
+      const res = await fetch('/api/admin/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const payload = await res.json();
+      if (!res.ok) {
+        console.error(payload);
+        return;
+      }
+      const newRole = payload as Role;
+      setRoles((prev) => [...prev, newRole]);
+      setForm({ name: '', description: '', permissionIds: [] });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -102,7 +142,7 @@ export default function RoleManager() {
               <td className="px-3 py-2">{r.name}</td>
               <td className="px-3 py-2">{r.description ?? '-'}</td>
               <td className="px-3 py-2">
-                {r.permissions.map((p: any) => p.permission.key).join(', ') || '-'}
+                {r.permissions.map((p) => p.permission.key).join(', ') || '-'}
               </td>
             </tr>
           ))}

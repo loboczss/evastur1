@@ -63,14 +63,26 @@ export default function UserEditModal({
     return () => { alive = false; };
   }, []);
 
+  type SavePayload = {
+    name: string;
+    email: string;
+    phone?: string;
+    isActive: boolean;
+    password?: string;
+  };
+
   const submit = async () => {
-    const payload: any = {
+    const payload: SavePayload = {
       name: form.name,
       email: form.email,
-      phone: form.phone,
       isActive: form.isActive,
     };
-    if (canEditPassword && form.password.trim()) payload.password = form.password.trim();
+    const phone = form.phone.trim();
+    if (phone) payload.phone = phone;
+    if (canEditPassword) {
+      const pwd = form.password.trim();
+      if (pwd) payload.password = pwd;
+    }
     await onSave(payload);
   };
 

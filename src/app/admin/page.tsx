@@ -6,7 +6,7 @@ import { useAdminUsers } from '@/hooks/useAdminUsers';
 
 export default function AdminPage() {
   const {
-    users, roles, loading, busyId,
+    roles, loading, busyId,
     query, setQuery, filtered,
     userRoleName, changeRole, removeUser, updateUser, createUser, reload
   } = useAdminUsers();
