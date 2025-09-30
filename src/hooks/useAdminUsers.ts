@@ -22,13 +22,27 @@ export function useAdminUsers() {
 
   const load = async () => {
     setLoading(true);
-    const [u, r] = await Promise.all([
-      fetch('/api/admin/users', { cache: 'no-store' }).then((x) => x.json()),
-      fetch('/api/admin/roles', { cache: 'no-store' }).then((x) => x.json()),
-    ]);
-    setUsers(u);
-    setRoles(r.map((x: any) => ({ id: x.id, name: x.name })));
-    setLoading(false);
+    try {
+      const [usersRes, rolesRes] = await Promise.all([
+        fetch('/api/admin/users', { cache: 'no-store' }),
+        fetch('/api/admin/roles', { cache: 'no-store' }),
+      ]);
+      if (!usersRes.ok || !rolesRes.ok) {
+        throw new Error('Falha ao carregar dados de administração');
+      }
+      const [usersData, rolesData] = await Promise.all([
+        usersRes.json() as Promise<User[]>,
+        rolesRes.json() as Promise<Array<{ id: number; name: Role['name'] }>>,
+      ]);
+      setUsers(usersData);
+      setRoles(rolesData.map(({ id, name }) => ({ id, name })));
+    } catch (error) {
+      console.error(error);
+      setUsers([]);
+      setRoles([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -64,7 +78,7 @@ export function useAdminUsers() {
     });
     setBusyId(null);
     if (res.ok) {
-      const updated = await res.json();
+      const updated = (await res.json()) as User;
       setUsers((prev) => prev.map((x) => (x.id === u.id ? updated : x)));
     }
   };
@@ -84,9 +98,9 @@ export function useAdminUsers() {
       body: JSON.stringify(payload),
     });
     if (res.ok) {
-      const updated = await res.json();
+      const updated = (await res.json()) as User;
       setUsers((prev) => prev.map((x) => (x.id === id ? updated : x)));
-      return updated as User;
+      return updated;
     }
     throw new Error('Falha ao salvar');
   };
@@ -104,9 +118,9 @@ export function useAdminUsers() {
       }),
     });
     if (!res.ok) throw new Error('Falha ao criar usuário');
-    const created = await res.json();
+    const created = (await res.json()) as User;
     setUsers((prev) => [...prev, created]);
-    return created as User;
+    return created;
   };
 
   return {

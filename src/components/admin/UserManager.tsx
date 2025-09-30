@@ -1,29 +1,49 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { User } from '@/hooks/useAdminUsers';
 
 export default function UserManager() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
 
   // Carregar usuários
   useEffect(() => {
-    fetch('/api/admin/users')
-      .then((res) => res.json())
-      .then(setUsers)
-      .catch((err) => console.error(err));
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/users');
+        if (!res.ok) throw new Error('Falha ao carregar usuários');
+        const data = (await res.json()) as User[];
+        if (active) setUsers(data);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Criar usuário
   const createUser = async () => {
-    const res = await fetch('/api/admin/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    const newUser = await res.json();
-    setUsers((prev) => [...prev, newUser]);
-    setForm({ name: '', email: '', phone: '' });
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const payload = await res.json();
+      if (!res.ok) {
+        console.error(payload);
+        return;
+      }
+      const newUser = payload as User;
+      setUsers((prev) => [...prev, newUser]);
+      setForm({ name: '', email: '', phone: '' });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -78,7 +98,7 @@ export default function UserManager() {
               <td className="px-3 py-2">{u.email}</td>
               <td className="px-3 py-2">{u.phone ?? '-'}</td>
               <td className="px-3 py-2">
-                {u.roles.map((r: any) => r.role.name).join(', ') || '-'}
+                {u.roles.map((r) => r.role.name).join(', ') || '-'}
               </td>
             </tr>
           ))}

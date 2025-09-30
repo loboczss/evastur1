@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -26,19 +26,21 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as Partial<{ key: string; description?: string | null }> | null;
     const { key, description } = body ?? {};
-    if (!key || typeof key !== 'string') {
+    if (typeof key !== 'string' || !key.trim()) {
       return NextResponse.json({ error: 'key é obrigatório' }, { status: 400 });
     }
 
     const created = await prisma.permission.create({
-      data: { key, description },
+      data: {
+        key: key.trim(),
+        description: typeof description === 'string' || description === null ? description : undefined,
+      },
     });
     return NextResponse.json(created, { status: 201 });
-  } catch (error: any) {
-    // Conflito de unique(key)
-    if (error?.code === 'P2002') {
+  } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: 'key já existe' }, { status: 409 });
     }
     console.error('❌ Erro no POST /permissions:', error);

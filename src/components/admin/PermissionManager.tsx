@@ -2,28 +2,53 @@
 
 import { useEffect, useState } from 'react';
 
+type Permission = {
+  id: number;
+  key: string;
+  description: string | null;
+};
+
 export default function PermissionManager() {
-  const [permissions, setPermissions] = useState<any[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [form, setForm] = useState({ key: '', description: '' });
 
   // Carregar permissões
   useEffect(() => {
-    fetch('/api/admin/permissions')
-      .then((res) => res.json())
-      .then(setPermissions)
-      .catch(console.error);
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/permissions');
+        if (!res.ok) throw new Error('Falha ao carregar permissões');
+        const data = (await res.json()) as Permission[];
+        if (active) setPermissions(data);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Criar permissão
   const createPermission = async () => {
-    const res = await fetch('/api/admin/permissions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    const newPerm = await res.json();
-    setPermissions((prev) => [...prev, newPerm]);
-    setForm({ key: '', description: '' });
+    try {
+      const res = await fetch('/api/admin/permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const payload = await res.json();
+      if (!res.ok) {
+        console.error(payload);
+        return;
+      }
+      const newPerm = payload as Permission;
+      setPermissions((prev) => [...prev, newPerm]);
+      setForm({ key: '', description: '' });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

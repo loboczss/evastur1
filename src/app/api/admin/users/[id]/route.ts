@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 type Ctx = { params: { id: string } };
@@ -33,6 +34,15 @@ export async function GET(_req: Request, { params }: Ctx) {
 }
 
 /** PUT /api/admin/users/[id]  Body: { name?, email?, phone?, isActive?, roleIds?: number[], password?: string } */
+type UpdatePayload = {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  isActive?: boolean;
+  roleIds?: unknown;
+  password?: string;
+};
+
 export async function PUT(req: Request, { params }: Ctx) {
   try {
     const actor = await getSessionUser();
@@ -41,25 +51,44 @@ export async function PUT(req: Request, { params }: Ctx) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as UpdatePayload | null;
     const { name, email, phone, isActive, roleIds, password } = body ?? {};
-    const data: any = { name, email, phone, isActive };
+    const data: Prisma.UserUpdateInput = {};
+    if (typeof name === 'string') data.name = name;
+    if (typeof email === 'string') data.email = email;
+    if (typeof phone === 'string') {
+      data.phone = phone || null;
+    } else if (phone === null) {
+      data.phone = null;
+    }
+    if (typeof isActive === 'boolean') data.isActive = isActive;
 
     // troca de senha só por superadmin
-    if (password && actor.roles.includes('superadmin')) {
-      data.passwordHash = await bcrypt.hash(String(password), 10);
+    if (typeof password === 'string' && password && actor.roles.includes('superadmin')) {
+      data.passwordHash = await bcrypt.hash(password, 10);
     }
+
+    const sanitizedRoleIds = Array.isArray(roleIds)
+      ? roleIds
+          .map((value) => {
+            if (typeof value === 'number') return value;
+            if (typeof value === 'string') return Number.parseInt(value, 10);
+            return Number.NaN;
+          })
+          .filter((value) => Number.isInteger(value))
+      : undefined;
 
     const updated = await prisma.user.update({
       where: { id: Number(params.id) },
       data: {
         ...data,
-        roles: Array.isArray(roleIds)
-          ? {
-              deleteMany: {},
-              create: roleIds.map((roleId: number) => ({ role: { connect: { id: roleId } } })),
-            }
-          : undefined,
+        roles:
+          sanitizedRoleIds !== undefined
+            ? {
+                deleteMany: {},
+                create: sanitizedRoleIds.map((roleId) => ({ role: { connect: { id: roleId } } })),
+              }
+            : undefined,
       },
       include: { roles: { include: { role: true } } },
     });

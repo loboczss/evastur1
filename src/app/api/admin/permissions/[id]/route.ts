@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -27,17 +27,23 @@ export async function GET(_req: Request, { params }: Ctx) {
 export async function PUT(request: Request, { params }: Ctx) {
   try {
     const id = Number(params.id);
-    const body = await request.json();
+    const body = (await request.json()) as Partial<{ key: string; description?: string | null }> | null;
     const { key, description } = body ?? {};
+    const sanitizedKey = typeof key === 'string' ? key.trim() : undefined;
+    const sanitizedDescription =
+      typeof description === 'string' ? description : description === null ? null : undefined;
 
     const updated = await prisma.permission.update({
       where: { id },
-      data: { key, description },
+      data: {
+        key: sanitizedKey && sanitizedKey.length > 0 ? sanitizedKey : undefined,
+        description: sanitizedDescription,
+      },
     });
 
     return NextResponse.json(updated, { status: 200 });
-  } catch (error: any) {
-    if (error?.code === 'P2002') {
+  } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: 'key já existe' }, { status: 409 });
     }
     console.error('❌ Erro no PUT /permissions/[id]:', error);
