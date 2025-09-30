@@ -152,7 +152,14 @@ export default function PackageModal({ open, onClose, data }: Props) {
                 <div>
                   <p className="text-sm text-gray-500">Resumo</p>
                   <p className="text-gray-800">
-                    {data.resumo || '[Resumo do pacote do DB]'}
+                    {data.resumo || data.descricao || 'Em breve adicionaremos um resumo para este pacote.'}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">Destino</p>
+                  <p className="text-gray-800">
+                    {data.local || 'Destino a definir'}
                   </p>
                 </div>
 
@@ -166,7 +173,7 @@ export default function PackageModal({ open, onClose, data }: Props) {
                   <div>
                     <p className="text-gray-500">Dias</p>
                     <p className="font-semibold text-gray-900">
-                      {data.dias ?? '[Qtd dias DB]'}
+                      {data.dias ?? 'A definir'}
                     </p>
                   </div>
                   <div>
@@ -184,16 +191,9 @@ export default function PackageModal({ open, onClose, data }: Props) {
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-500">Evento / Observações</p>
-                  <p className="text-gray-800">
-                    {data.evento || '[Informações de evento do DB]'}
-                  </p>
-                </div>
-
-                <div>
                   <p className="text-sm text-gray-500">Sobre o lugar</p>
                   <p className="text-gray-800">
-                    {data.descricao || '[Texto sobre o destino (DB)]'}
+                    {data.descricao || 'Em breve adicionaremos uma descrição completa deste destino.'}
                   </p>
                 </div>
 

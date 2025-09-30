@@ -7,7 +7,7 @@ export type PackageDTO = {
   dias?: number;         // [Qtd de dias do DB]
   dataIda?: string;      // ISO (ex: 2025-12-01)
   dataVolta?: string;    // ISO (ex: 2025-12-05)
-  evento?: string;       // [Info de evento do DB]
+  local?: string;        // [Local/destino do DB]
   imagens?: string[];    // Até 5 URLs (ou caminhos do /public)
   // … acrescente campos que tiver no DB
 };

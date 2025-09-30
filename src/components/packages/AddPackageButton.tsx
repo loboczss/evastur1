@@ -1,27 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import AddPackageModal from './AddPackageModal';
+import { useCanManagePackages } from '@/hooks/useCanManagePackages';
 
 export default function AddPackageButton() {
-  const [canAdd, setCanAdd] = useState(false);
+  const canAdd = useCanManagePackages();
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch('/api/auth/me', {
-          cache: 'no-store',
-          credentials: 'include',
-        });
-        const data = await r.json();
-        const roles: string[] = data?.user?.roles ?? [];
-        setCanAdd(roles.includes('admin') || roles.includes('superadmin'));
-      } catch {}
-    })();
-  }, []);
 
   if (!canAdd) return null;
 
