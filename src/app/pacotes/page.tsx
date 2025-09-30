@@ -5,20 +5,15 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import PackageModal from '@/components/PackageModal';
 import AddPackageButton from '@/components/packages/AddPackageButton'; // ✅ botão com checagem de permissão
 import type { PackageDTO } from '@/types/package';
+import { usePackages } from '@/hooks/usePackages';
+import { useCanManagePackages } from '@/hooks/useCanManagePackages';
 
 export default function PacotesPage() {
-  // ⚠️ Placeholders – troque por dados do DB (fetch/SSR)
-  const pacotes: PackageDTO[] = [
-    { id: 'p1', nome: '[Nome 1]', resumo: '[Resumo 1]', preco: '[Preço 1]', imagens: [] },
-    { id: 'p2', nome: '[Nome 2]', resumo: '[Resumo 2]', preco: '[Preço 2]', imagens: [] },
-    { id: 'p3', nome: '[Nome 3]', resumo: '[Resumo 3]', preco: '[Preço 3]', imagens: [] },
-    { id: 'p4', nome: '[Nome 4]', resumo: '[Resumo 4]', preco: '[Preço 4]', imagens: [] },
-    { id: 'p5', nome: '[Nome 5]', resumo: '[Resumo 5]', preco: '[Preço 5]', imagens: [] },
-    { id: 'p6', nome: '[Nome 6]', resumo: '[Resumo 6]', preco: '[Preço 6]', imagens: [] },
-  ];
-
+  const { packages: pacotes, loading, error, removeLocal } = usePackages();
+  const canManage = useCanManagePackages();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<PackageDTO | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { scrollYProgress } = useScroll();
   // Parallax suave na hero (imagem “sobe” levemente ao rolar)
@@ -27,6 +22,29 @@ export default function PacotesPage() {
   const abrir = (pkg: PackageDTO) => {
     setCurrent(pkg);
     setOpen(true);
+  };
+
+  const excluir = async (pkg: PackageDTO) => {
+    if (!canManage) return;
+    if (!confirm(`Deseja realmente excluir o pacote "${pkg.nome}"?`)) return;
+    setDeletingId(pkg.id);
+    try {
+      const res = await fetch(`/api/admin/packages/${pkg.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Falha ao excluir pacote');
+      }
+      removeLocal(pkg.id);
+      if (current?.id === pkg.id) {
+        setOpen(false);
+        setCurrent(null);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao excluir pacote';
+      alert(message);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -79,50 +97,88 @@ export default function PacotesPage() {
 
       {/* Grade de pacotes */}
       <section className="max-w-6xl mx-auto px-6 py-14">
+        {loading && <p className="text-center text-gray-500">Carregando pacotes…</p>}
+
+        {!loading && error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && pacotes.length === 0 && (
+          <p className="text-center text-gray-500">Nenhum pacote cadastrado até o momento.</p>
+        )}
+
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {pacotes.map((p, i) => (
-            <motion.button
-              key={p.id}
-              type="button"
-              onClick={() => abrir(p)}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
-              transition={{ delay: i * 0.05, duration: 0.45 }}
-              whileHover={{ y: -6 }}
-              whileTap={{ scale: 0.98 }}
-              className="group text-left rounded-2xl overflow-hidden bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-pink-300"
-            >
-              {/* imagem do pacote */}
-              <div className="relative h-40 w-full overflow-hidden bg-gray-200">
-                {/* Quando tiver DB: <img src={p.imagens?.[0]} ... /> */}
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                  [Imagem do pacote]
-                </div>
-                {/* brilho no hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/20 to-transparent" />
-              </div>
+          {pacotes.map((p, i) => {
+            const capa = p.imagens?.[0];
+            return (
+              <motion.article
+                key={p.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => abrir(p)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    abrir(p);
+                  }
+                }}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ delay: i * 0.05, duration: 0.45 }}
+                whileHover={{ y: -6 }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-pink-300"
+              >
+                <div className="relative h-40 w-full overflow-hidden bg-gray-200">
+                  {capa ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={capa} alt={p.nome} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                      Imagem indisponível
+                    </div>
+                  )}
+                  <div className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
 
-              {/* conteúdo */}
-              <div className="p-5">
-                <h3 className="text-lg font-semibold">{p.nome || '[Nome DB]'}</h3>
-                <p className="mt-1 text-sm text-gray-600">
-                  {p.resumo || '[Resumo DB]'}
-                </p>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xl font-extrabold text-gray-900">
-                    {p.preco || '[Preço]'}
-                  </span>
-                  <span className="rounded-full px-3 py-1 text-white text-sm font-semibold
-                    bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500
-                    bg-[length:200%_200%] animate-gradient-x shadow">
-                    Ver detalhes
-                  </span>
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        excluir(p);
+                      }}
+                      className="absolute right-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-black/80"
+                      disabled={deletingId === p.id}
+                    >
+                      {deletingId === p.id ? 'Removendo…' : 'Excluir'}
+                    </button>
+                  )}
                 </div>
-              </div>
-            </motion.button>
-          ))}
+
+                <div className="flex h-full flex-col gap-3 p-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{p.nome}</h3>
+                    <p className="text-sm text-gray-500">{p.local || 'Destino a definir'}</p>
+                  </div>
+
+                  <p className="text-sm text-gray-600">
+                    {p.resumo || p.descricao || 'Descrição em breve.'}
+                  </p>
+
+                  <div className="mt-auto flex items-center justify-between text-sm">
+                    <span className="text-xl font-extrabold text-gray-900">{p.preco || 'Preço a consultar'}</span>
+                    <div className="text-right text-xs text-gray-500">
+                      <p>{p.dias ? `${p.dias} dia(s)` : 'Dias a definir'}</p>
+                      <p>
+                        {p.dataIda ? new Date(p.dataIda).toLocaleDateString() : 'Ida a definir'}
+                        {' '}•{' '}
+                        {p.dataVolta ? new Date(p.dataVolta).toLocaleDateString() : 'Volta a definir'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.article>
+            );
+          })}
         </div>
       </section>
 
