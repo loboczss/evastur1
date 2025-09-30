@@ -12,7 +12,10 @@ export default function AddPackageButton() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch('/api/auth/me', { cache: 'no-store' });
+        const r = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
         const data = await r.json();
         const roles: string[] = data?.user?.roles ?? [];
         setCanAdd(roles.includes('admin') || roles.includes('superadmin'));

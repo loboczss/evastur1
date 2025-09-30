@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 
 const SESSION_COOKIE = 'session_id';
 const SESSION_DAYS = 7;
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {

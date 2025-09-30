@@ -71,7 +71,11 @@ export default function AddPackageModal({ open, onClose }: { open: boolean; onCl
       if (form.description) fd.append('description', form.description);
       form.images.forEach((img, i) => fd.append(`images[${i}]`, img));
 
-      const res = await fetch('/api/admin/packages', { method: 'POST', body: fd });
+      const res = await fetch('/api/admin/packages', {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.error || 'Falha ao criar pacote');
