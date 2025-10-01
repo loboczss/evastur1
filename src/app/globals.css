@@ -55,3 +55,12 @@ body {
   scrollbar-color: rgba(0,0,0,0.25) transparent;
   scrollbar-width: thin;
 }
+
+body.editing-mode-active {
+  cursor: text;
+}
+
+.inline-editing-element {
+  outline: 2px dashed #6366f1;
+  outline-offset: 2px;
+}
