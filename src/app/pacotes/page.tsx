@@ -355,12 +355,11 @@ export default function PacotesPage() {
                 key={p.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => { setCurrent(p); setOpen(true); }}
+                onClick={() => abrir(p)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    setCurrent(p);
-                    setOpen(true);
+                    abrir(p);
                   }
                 }}
                 initial={{ opacity: 0, y: 18 }}

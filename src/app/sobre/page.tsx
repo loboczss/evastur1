@@ -188,12 +188,7 @@ export default function SobrePage() {
                 <div className="relative isolate rounded-3xl border border-white/20 bg-white/15 p-6 shadow-2xl backdrop-blur-xl ring-1 ring-white/20">
                   <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-white/0" />
                   <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { icon: Plane, title: 'Passagens' },
-                      { icon: Hotel, title: 'Hotéis' },
-                      { icon: Ship, title: 'Cruzeiros' },
-                      { icon: MapPin, title: 'Passeios' },
-                    ].map((s, i) => {
+                    {SERVICES.slice(0, 4).map((s, i) => {
                       const Icon = s.icon;
                       return (
                         <motion.div
@@ -270,7 +265,7 @@ export default function SobrePage() {
               { year: '2016', title: 'Rede global', text: 'Parcerias internacionais e curadoria mais robusta.' },
               { year: '2022', title: 'Expansão de serviços', text: 'Cruzeiros, experiências exclusivas e grupos.' },
               { year: 'Hoje', title: 'Próximo nível', text: 'Tecnologia + cuidado humano para escalar sem perder o toque.' },
-            ].map((t, i) => (
+            ].map((t) => (
               <li key={t.title}>
                 <div className="absolute -start-1.5 mt-1.5 h-3 w-3 rounded-full border border-white bg-pink-600" />
                 <time className="mb-1 block text-sm font-semibold text-pink-700">{t.year}</time>

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { KeyboardEvent, ReactNode } from 'react';
 import type { User } from '@/hooks/useAdminUsers';
 import {
   PlusCircleIcon,
@@ -41,8 +42,12 @@ export default function UserManager() {
       if (!res.ok) throw new Error('Falha ao carregar usuários');
       const data = (await res.json()) as User[];
       setUsers(data);
-    } catch (err: any) {
-      if (err?.name !== 'AbortError') setError(err?.message || 'Erro ao carregar usuários');
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'Erro ao carregar usuários';
+      setError(message);
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
@@ -105,15 +110,16 @@ export default function UserManager() {
       const newUser = data as User;
       setUsers((prev) => [...prev, newUser]);
       setForm({ name: '', email: '', phone: '' });
-    } catch (err: any) {
-      setError(err?.message || 'Erro ao criar usuário');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao criar usuário';
+      setError(message);
     } finally {
       setCreating(false);
     }
   };
 
   // submit com Enter no último input
-  const onKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const onKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') createUser();
   };
 
@@ -354,13 +360,13 @@ function Field({
   error,
 }: {
   className?: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
   autoComplete?: string;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
   error?: boolean;
 }) {
   return (
