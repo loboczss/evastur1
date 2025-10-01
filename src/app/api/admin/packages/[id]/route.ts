@@ -6,10 +6,10 @@ import path from 'path';
 
 export async function DELETE(
   _: Request,
-  context: { params: Promise<{ id: string }> }
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const actor = await getSessionUser();
     if (!actor) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     if (!hasAdminRights(actor.roles)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
