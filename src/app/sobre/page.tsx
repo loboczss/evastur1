@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   Users,
@@ -165,7 +166,7 @@ export default function SobrePage() {
                   transition={{ delay: 0.2, duration: 0.8 }}
                   className="mt-6 text-xl md:text-2xl text-white/90 font-light leading-relaxed"
                 >
-                  A Evastur nasceu para transformar o "um dia eu vou" em "quando é a próxima?" — unindo curadoria humana, tecnologia e parceiros confiáveis.
+                  A Evastur nasceu para transformar o &quot;um dia eu vou&quot; em &quot;quando é a próxima?&quot; — unindo curadoria humana, tecnologia e parceiros confiáveis.
                 </motion.p>
 
                 <motion.div
@@ -378,10 +379,12 @@ export default function SobrePage() {
               >
                 <div className="relative h-full bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
                   <div className="relative h-64 overflow-hidden">
-                    <img
+                    <Image
                       src={`https://images.unsplash.com/photo-15${i}22480510-0a0666b70f7b?auto=format&fit=crop&w=1200&q=70`}
                       alt={`Membro ${i}`}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>

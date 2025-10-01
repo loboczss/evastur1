@@ -58,7 +58,7 @@ export default function LoginPage() {
       const destination = roles.includes('admin') || roles.includes('superadmin') ? '/admin' : '/';
       router.push(destination);
       router.refresh();
-    } catch (e) {
+    } catch {
       setErr('Não foi possível conectar. Tente novamente.');
       setBusy(false);
     }
