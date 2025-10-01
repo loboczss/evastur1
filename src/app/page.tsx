@@ -44,11 +44,11 @@ export default function HomePage() {
   const preview: PackageDTO[] = useMemo(() => (pacotes || []).slice(0, 6), [pacotes]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 text-gray-900 pt-safe-header">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 text-gray-900">
       {/* HERO SECTION - Ultra Modern */}
       <section
         id="topo"
-        className="relative isolate w-full overflow-hidden scroll-mt-[var(--header-h)] min-h-[calc(100svh-var(--header-h))] md:min-h-[850px]"
+        className="relative isolate w-full overflow-hidden min-h-[100svh] md:min-h-[850px]"
       >
         {/* Animated Background with Enhanced Effects */}
         <motion.div style={{ opacity: heroOpacity }} className="absolute inset-0 z-0">
@@ -82,7 +82,7 @@ export default function HomePage() {
         <div className="absolute inset-0 z-0 backdrop-blur-[2px] bg-gradient-to-b from-transparent via-transparent to-white" />
 
         {/* Content Container */}
-        <div className="relative z-10 flex h-full items-center">
+        <div className="relative z-10 flex h-full items-center pt-20">
           <div className="max-w-7xl mx-auto px-6 w-full py-20">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               {/* Left Content */}
