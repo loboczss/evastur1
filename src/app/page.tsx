@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import EditableText from '@/components/EditableText';
 
 // Import dinâmico (evita SSR de framer-motion em alguns hosts)
 const HeroSearch = dynamic(() => import('@/components/HeroSearch'), { ssr: false });
@@ -24,24 +25,32 @@ export default function HomePage() {
       {/* CTA final */}
       <section className="bg-white/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-20 text-center">
-          <motion.h2
+          <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-3xl md:text-4xl font-extrabold"
           >
-            [Título da chamada final (DB)]
-          </motion.h2>
-          <motion.p
+            <EditableText
+              as="h2"
+              id="home.final.title"
+              defaultContent="[Título da chamada final (DB)]"
+              className="text-3xl md:text-4xl font-extrabold"
+            />
+          </motion.div>
+          <motion.div
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            className="mt-3 text-gray-600 max-w-2xl mx-auto"
           >
-            [Descrição curta da chamada final (DB)]
-          </motion.p>
+            <EditableText
+              as="p"
+              id="home.final.description"
+              defaultContent="[Descrição curta da chamada final (DB)]"
+              className="mt-3 text-gray-600 max-w-2xl mx-auto"
+            />
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -56,7 +65,11 @@ export default function HomePage() {
               bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-[length:200%_200%]
               shadow-md hover:shadow-lg transition-all duration-500 hover:scale-[1.02] animate-gradient-x"
             >
-              [CTA ver pacotes (DB)]
+              <EditableText
+                as="span"
+                id="home.final.cta"
+                defaultContent="[CTA ver pacotes (DB)]"
+              />
             </Link>
           </motion.div>
         </div>

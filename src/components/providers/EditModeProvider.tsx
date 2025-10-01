@@ -11,33 +11,23 @@ import {
 } from 'react';
 import { usePathname } from 'next/navigation';
 
+type RegisteredEditable = {
+  element: HTMLElement;
+  path: string;
+  editableId: string;
+  setContent: (value: string) => void;
+};
+
 export type EditModeContextValue = {
   isEditing: boolean;
   enableEdit: () => void;
   disableEdit: () => void;
   toggleEdit: () => void;
+  registerEditable: (key: string, editable: RegisteredEditable) => void;
+  unregisterEditable: (key: string) => void;
 };
 
 export const EditModeContext = createContext<EditModeContextValue | undefined>(undefined);
-
-const EDITABLE_SELECTOR = [
-  'p',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'span',
-  'small',
-  'strong',
-  'em',
-  'li',
-  'a',
-  'blockquote',
-  'figcaption',
-  'label',
-].join(',');
 
 type Props = {
   children: ReactNode;
@@ -54,43 +44,73 @@ function isElementVisible(element: HTMLElement) {
 
 export default function EditModeProvider({ children }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
   const pathname = usePathname();
   const trackedElements = useRef(new Map<HTMLElement, string | null>());
+  const registeredEditables = useRef(new Map<string, RegisteredEditable>());
 
   const enableEdit = useCallback(() => setIsEditing(true), []);
   const disableEdit = useCallback(() => setIsEditing(false), []);
   const toggleEdit = useCallback(() => setIsEditing((prev) => !prev), []);
 
-  const applyEditingToElements = useCallback(() => {
-    if (!isEditing) return;
-    if (typeof window === 'undefined') return;
+  const enableEditingForElement = useCallback((element: HTMLElement) => {
+    if (!isElementVisible(element)) return;
+    if (element.dataset.inlineEditing === 'true') return;
+    trackedElements.current.set(element, element.getAttribute('contenteditable'));
+    element.setAttribute('contenteditable', 'true');
+    element.dataset.inlineEditing = 'true';
+    element.classList.add('inline-editing-element');
+  }, []);
 
-    const nodes = document.querySelectorAll<HTMLElement>(EDITABLE_SELECTOR);
-    nodes.forEach((node) => {
-      if (!isElementVisible(node)) return;
-      if (node.dataset.inlineEditing === 'true') return;
+  const disableEditingForElement = useCallback((element: HTMLElement) => {
+    if (!document.body.contains(element)) return;
+    const previousValue = trackedElements.current.get(element) ?? element.getAttribute('contenteditable');
+    if (previousValue === null || previousValue === '' || previousValue === undefined) {
+      element.removeAttribute('contenteditable');
+    } else {
+      element.setAttribute('contenteditable', previousValue);
+    }
+    element.classList.remove('inline-editing-element');
+    delete element.dataset.inlineEditing;
+    trackedElements.current.delete(element);
+  }, []);
 
-      trackedElements.current.set(node, node.getAttribute('contenteditable'));
-      node.setAttribute('contenteditable', 'true');
-      node.dataset.inlineEditing = 'true';
-      node.classList.add('inline-editing-element');
-    });
-  }, [isEditing]);
+  const registerEditable = useCallback(
+    (key: string, editable: RegisteredEditable) => {
+      if (!editable.element) return;
+      registeredEditables.current.set(key, editable);
+
+      if (!isEditing) return;
+      if (typeof window === 'undefined') return;
+
+      window.requestAnimationFrame(() => {
+        if (!document.body.contains(editable.element)) return;
+        enableEditingForElement(editable.element);
+      });
+    },
+    [enableEditingForElement, isEditing]
+  );
+
+  const unregisterEditable = useCallback(
+    (key: string) => {
+      const editable = registeredEditables.current.get(key);
+      if (!editable) return;
+      if (editable.element.dataset.inlineEditing === 'true') {
+        disableEditingForElement(editable.element);
+      }
+      registeredEditables.current.delete(key);
+    },
+    [disableEditingForElement]
+  );
 
   const clearEditingState = useCallback(() => {
     if (typeof window === 'undefined') return;
-    trackedElements.current.forEach((previousValue, element) => {
-      if (!document.body.contains(element)) return;
-      if (previousValue === null || previousValue === '') {
-        element.removeAttribute('contenteditable');
-      } else {
-        element.setAttribute('contenteditable', previousValue);
-      }
-      element.classList.remove('inline-editing-element');
-      delete element.dataset.inlineEditing;
+    trackedElements.current.forEach((_, element) => {
+      disableEditingForElement(element);
     });
     trackedElements.current.clear();
-  }, []);
+  }, [disableEditingForElement]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -98,26 +118,26 @@ export default function EditModeProvider({ children }: Props) {
       return;
     }
 
-    applyEditingToElements();
+    if (typeof window === 'undefined') return;
 
-    const observer = new MutationObserver(() => {
-      applyEditingToElements();
+    window.requestAnimationFrame(() => {
+      registeredEditables.current.forEach((editable) => {
+        if (!document.body.contains(editable.element)) return;
+        enableEditingForElement(editable.element);
+      });
     });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isEditing, applyEditingToElements, clearEditingState]);
+  }, [clearEditingState, enableEditingForElement, isEditing]);
 
   useEffect(() => {
     if (!isEditing) return;
     const id = window.requestAnimationFrame(() => {
-      applyEditingToElements();
+      registeredEditables.current.forEach((editable) => {
+        if (!document.body.contains(editable.element)) return;
+        enableEditingForElement(editable.element);
+      });
     });
     return () => window.cancelAnimationFrame(id);
-  }, [isEditing, pathname, applyEditingToElements]);
+  }, [enableEditingForElement, isEditing, pathname]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -141,9 +161,59 @@ export default function EditModeProvider({ children }: Props) {
     };
   }, [isEditing]);
 
+  const handleSave = useCallback(async () => {
+    if (saving) return;
+    if (typeof window === 'undefined') return;
+
+    const updates: { path: string; key: string; content: string; registryKey: string }[] = [];
+    registeredEditables.current.forEach((editable, registryKey) => {
+      if (!document.body.contains(editable.element)) return;
+      const content = editable.element.innerHTML ?? '';
+      updates.push({ path: editable.path, key: editable.editableId, content, registryKey });
+    });
+
+    if (updates.length === 0) {
+      alert('Nenhum conteúdo editável encontrado para salvar.');
+      disableEdit();
+      return;
+    }
+
+    setSaving(true);
+    setStatus(null);
+
+    try {
+      const res = await fetch('/api/content', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: updates.map(({ path, key, content }) => ({ path, key, content })) }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const message = typeof body?.error === 'string' ? body.error : 'Não foi possível salvar as edições.';
+        setStatus({ type: 'error', message });
+        return;
+      }
+
+      updates.forEach(({ registryKey, content }) => {
+        const editable = registeredEditables.current.get(registryKey);
+        editable?.setContent(content);
+      });
+
+      alert('Edições salvas com sucesso!');
+      setStatus(null);
+      disableEdit();
+    } catch (error) {
+      console.error('Erro ao salvar edições', error);
+      setStatus({ type: 'error', message: 'Erro inesperado ao salvar as edições.' });
+    } finally {
+      setSaving(false);
+    }
+  }, [disableEdit, saving]);
+
   const value = useMemo<EditModeContextValue>(
-    () => ({ isEditing, enableEdit, disableEdit, toggleEdit }),
-    [isEditing, enableEdit, disableEdit, toggleEdit]
+    () => ({ isEditing, enableEdit, disableEdit, toggleEdit, registerEditable, unregisterEditable }),
+    [disableEdit, enableEdit, isEditing, registerEditable, toggleEdit, unregisterEditable]
   );
 
   return (
@@ -154,15 +224,24 @@ export default function EditModeProvider({ children }: Props) {
           <span className="rounded-full bg-indigo-500/90 px-4 py-1 text-sm font-medium text-white shadow-lg">
             Modo edição ativo
           </span>
+          {status && (
+            <span
+              className={`rounded-full px-4 py-1 text-xs font-medium shadow transition ${
+                status.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+              }`}
+            >
+              {status.message}
+            </span>
+          )}
           <button
             type="button"
-            onClick={() => {
-              alert('Edições salvas localmente.');
-              disableEdit();
-            }}
-            className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            onClick={handleSave}
+            disabled={saving}
+            className={`rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-300 ${
+              saving ? 'bg-emerald-400 cursor-not-allowed opacity-90' : 'bg-emerald-500 hover:bg-emerald-600'
+            }`}
           >
-            Salvar Edições
+            {saving ? 'Salvando…' : 'Salvar Edições'}
           </button>
         </div>
       )}

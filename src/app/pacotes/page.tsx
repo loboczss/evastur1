@@ -8,6 +8,7 @@ import type { PackageDTO } from '@/types/package';
 import { usePackages } from '@/hooks/usePackages';
 import { useCanManagePackages } from '@/hooks/useCanManagePackages';
 import { useEditMode } from '@/hooks/useEditMode';
+import EditableText from '@/components/EditableText';
 
 export default function PacotesPage() {
   const { packages: pacotes, loading, error, removeLocal } = usePackages();
@@ -90,22 +91,30 @@ export default function PacotesPage() {
           <div className="max-w-6xl mx-auto px-6 w-full">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <motion.h1
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  className="text-4xl md:text-5xl font-extrabold text-white drop-shadow"
                 >
-                  [Título Pacotes (DB)]
-                </motion.h1>
-                <motion.p
+                  <EditableText
+                    as="h1"
+                    id="packages.hero.title"
+                    defaultContent="[Título Pacotes (DB)]"
+                    className="text-4xl md:text-5xl font-extrabold text-white drop-shadow"
+                  />
+                </motion.div>
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.6 }}
-                  className="mt-3 max-w-2xl text-white/90"
                 >
-                  [Descrição curta (DB)]
-                </motion.p>
+                  <EditableText
+                    as="p"
+                    id="packages.hero.subtitle"
+                    defaultContent="[Descrição curta (DB)]"
+                    className="mt-3 max-w-2xl text-white/90"
+                  />
+                </motion.div>
               </div>
 
               {/* ✅ Botão visível só para admin/superadmin (AddPackageButton faz a checagem) */}

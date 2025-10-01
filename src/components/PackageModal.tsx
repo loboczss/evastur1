@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import type { PackageDTO } from '@/types/package';
+import EditableText from './EditableText';
 
 type Props = {
   open: boolean;
@@ -142,7 +143,11 @@ export default function PackageModal({ open, onClose, data }: Props) {
                   </>
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-gray-500">
-                    [Carrossel do DB (0 imagens)]
+                    <EditableText
+                      as="span"
+                      id="packages.modal.emptyGallery"
+                      defaultContent="[Carrossel do DB (0 imagens)]"
+                    />
                   </div>
                 )}
               </div>
@@ -167,7 +172,13 @@ export default function PackageModal({ open, onClose, data }: Props) {
                   <div>
                     <p className="text-gray-500">Preço</p>
                     <p className="font-semibold text-gray-900">
-                      {data.preco || '[Preço do DB]'}
+                      {data.preco || (
+                        <EditableText
+                          as="span"
+                          id="packages.modal.pricePlaceholder"
+                          defaultContent="[Preço do DB]"
+                        />
+                      )}
                     </p>
                   </div>
                   <div>
@@ -179,13 +190,29 @@ export default function PackageModal({ open, onClose, data }: Props) {
                   <div>
                     <p className="text-gray-500">Ida</p>
                     <p className="font-semibold text-gray-900">
-                      {data.dataIda ? new Date(data.dataIda).toLocaleDateString() : '[Data ida DB]'}
+                      {data.dataIda ? (
+                        new Date(data.dataIda).toLocaleDateString()
+                      ) : (
+                        <EditableText
+                          as="span"
+                          id="packages.modal.departurePlaceholder"
+                          defaultContent="[Data ida DB]"
+                        />
+                      )}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Volta</p>
                     <p className="font-semibold text-gray-900">
-                      {data.dataVolta ? new Date(data.dataVolta).toLocaleDateString() : '[Data volta DB]'}
+                      {data.dataVolta ? (
+                        new Date(data.dataVolta).toLocaleDateString()
+                      ) : (
+                        <EditableText
+                          as="span"
+                          id="packages.modal.returnPlaceholder"
+                          defaultContent="[Data volta DB]"
+                        />
+                      )}
                     </p>
                   </div>
                 </div>
@@ -203,7 +230,11 @@ export default function PackageModal({ open, onClose, data }: Props) {
                                bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-[length:200%_200%]
                                shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-500 animate-gradient-x"
                   >
-                    [CTA Reservar (DB)]
+                    <EditableText
+                      as="span"
+                      id="packages.modal.cta"
+                      defaultContent="[CTA Reservar (DB)]"
+                    />
                   </button>
                 </div>
               </div>
