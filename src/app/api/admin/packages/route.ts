@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser, hasAdminRights } from '@/lib/auth';
 import { randomUUID } from 'crypto';
 import { writeFile, mkdir } from 'fs/promises';
+
 import path from 'path';
 
 export async function POST(req: Request) {
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         title,
         slug,
         description: description || null,
-        price: price ? new Prisma.Decimal(price) : null,
+        price: price ? new prisma.Prisma.Decimal(price) : null,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         days: days || undefined,

@@ -3,6 +3,18 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* altura padrão do header fixo */
+  --header-h: 64px;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+    /* header um pouco maior no mobile */
+    --header-h: 72px;
+  }
 }
 
 @theme inline {
@@ -25,6 +37,24 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ========== FIX HEADER (safe area) ========== */
+
+/* Garante que ao entrar na página o conteúdo não fique escondido */
+.pt-safe-header {
+  padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+}
+
+/* Se precisar só em margens (h1 inicial, por exemplo) */
+.mt-safe-header {
+  margin-top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+}
+
+/* Scroll suave para âncoras (#buscar, #beneficios, etc.) */
+html {
+  scroll-padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+}
+
+/* ========== Animação gradiente já existente ========== */
 @keyframes gradient-x {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -35,7 +65,7 @@ body {
   animation: gradient-x 6s ease infinite;
 }
 
-/* barra de rolagem horizontal da tabela de admin */
+/* ========== Scrollbar custom horizontal (admin) ========== */
 .scrollbar-h::-webkit-scrollbar {
   height: 10px;
 }
@@ -49,13 +79,13 @@ body {
 .scrollbar-h::-webkit-scrollbar-thumb:hover {
   background: rgba(0,0,0,0.25);
 }
-
 /* firefox */
 .scrollbar-h {
   scrollbar-color: rgba(0,0,0,0.25) transparent;
   scrollbar-width: thin;
 }
 
+/* ========== Edit mode (inline editing) ========== */
 body.editing-mode-active {
   cursor: text;
 }

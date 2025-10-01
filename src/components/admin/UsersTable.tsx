@@ -15,7 +15,7 @@ import UserEditModal from './UserEditModal';
 import CreateUserModal from './CreateUserModal';
 
 /* =========================================
-   UsersTable – visual novo, profissional
+   UsersTable – admin polido e responsivo
    ========================================= */
 
 export default function UsersTable({
@@ -50,7 +50,7 @@ export default function UsersTable({
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  // para não recalcular ao digitar
+  // Mantém referência estável (evita reanimação desnecessária)
   const visibleUsers = useMemo(() => users, [users]);
 
   return (
@@ -58,16 +58,19 @@ export default function UsersTable({
       {/* TOPBAR */}
       <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-gray-900">Usuários</h1>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900">Usuários</h1>
           <p className="text-gray-600">Gerencie permissões, edite e exclua contas.</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+        <div className="flex w-full sm:w-auto flex-wrap items-center gap-3">
+          <div className="relative flex-1 sm:flex-none">
+            <MagnifyingGlassIcon
+              className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+              aria-hidden
+            />
             <input
               placeholder="Buscar por nome, email ou telefone…"
-              className="w-[300px] rounded-full border border-gray-200 bg-white/80 px-10 py-2 shadow-sm outline-none backdrop-blur-md focus:ring-2 focus:ring-indigo-300"
+              className="w-full sm:w-[320px] rounded-full border border-gray-200 bg-white/80 px-10 py-2 shadow-sm outline-none backdrop-blur-md focus:ring-2 focus:ring-indigo-300"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Buscar usuários"
@@ -76,11 +79,13 @@ export default function UsersTable({
 
           <button
             onClick={onReload}
-            className="group inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-4 py-2 font-semibold text-gray-800 shadow-sm backdrop-blur transition hover:shadow-md"
+            disabled={loading}
+            className="group inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-4 py-2 font-semibold text-gray-800 shadow-sm backdrop-blur transition hover:shadow-md disabled:opacity-60"
             title="Recarregar"
             aria-label="Recarregar lista"
+            aria-busy={loading}
           >
-            <ArrowPathIcon className="h-5 w-5 transition group-hover:-rotate-180" />
+            <ArrowPathIcon className={`h-5 w-5 transition ${loading ? 'animate-spin' : 'group-hover:-rotate-180'}`} />
             Recarregar
           </button>
 
@@ -96,18 +101,15 @@ export default function UsersTable({
         </div>
       </div>
 
-      {/* CARD + SCROLL HORIZONTAL */}
-      <div className="relative">
+      {/* DESKTOP (md+): Tabela com scroll horizontal + header sticky */}
+      <div className="relative hidden md:block">
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           className="overflow-hidden rounded-2xl bg-white/85 shadow-xl ring-1 ring-gray-200 backdrop-blur"
         >
-          {/* scroller horizontal (aplique estilos bonitos à classe .scrollbar-h no globals.css) */}
           <div className="overflow-x-auto scrollbar-h">
-            {/* largura mínima para forçar a barra quando necessário */}
             <div className="min-w-[1120px]">
-              {/* HEADER sticky dentro do scroller */}
               <div className="grid grid-cols-[1.4fr_1.2fr_0.7fr_0.9fr_0.9fr] items-center border-b bg-gradient-to-r from-white to-gray-50 px-5 py-3 text-sm font-semibold text-gray-600 whitespace-nowrap sticky top-0">
                 <div>Usuário</div>
                 <div>Email</div>
@@ -116,7 +118,6 @@ export default function UsersTable({
                 <div className="text-right pr-2">Ações</div>
               </div>
 
-              {/* BODY */}
               <AnimatePresence initial={false}>
                 {loading ? (
                   <SkeletonRows />
@@ -125,8 +126,10 @@ export default function UsersTable({
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-center justify-center gap-3 px-8 py-16 text-gray-500"
+                    role="status"
+                    aria-live="polite"
                   >
-                    <FaceFrownIcon className="h-6 w-6" />
+                    <FaceFrownIcon className="h-6 w-6" aria-hidden />
                     Nenhum usuário encontrado.
                   </motion.div>
                 ) : (
@@ -141,13 +144,15 @@ export default function UsersTable({
                       onDoubleClick={() => setEditing(u)}
                       onChangeRole={(role) => onChangeRole(u, role)}
                       onEdit={() => setEditing(u)}
-                      onDelete={() => onDelete(u.id)}
+                      onDelete={async () => {
+                        if (!confirm(`Excluir ${u.name}?`)) return;
+                        await onDelete(u.id);
+                      }}
                     />
                   ))
                 )}
               </AnimatePresence>
 
-              {/* espaçador para não colar na barra */}
               <div className="h-1" />
             </div>
           </div>
@@ -159,8 +164,94 @@ export default function UsersTable({
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.6 }}
           className="pointer-events-none absolute -inset-px rounded-2xl [background:conic-gradient(from_180deg_at_50%_50%,#a78bfa33,#f472b633,#22d3ee33,#a78bfa33)]"
-          style={{ mask: 'linear-gradient(#000,#000) content-box, linear-gradient(#000,#000)', WebkitMask: 'linear-gradient(#000,#000) content-box, linear-gradient(#000,#000)' }}
+          style={{
+            mask: 'linear-gradient(#000,#000) content-box, linear-gradient(#000,#000)',
+            WebkitMask: 'linear-gradient(#000,#000) content-box, linear-gradient(#000,#000)',
+          }}
         />
+      </div>
+
+      {/* MOBILE (<md): Cards empilhados com as mesmas ações */}
+      <div className="md:hidden">
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+          {loading && <MobileSkeleton />}
+          {!loading && visibleUsers.length === 0 && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-gray-500">
+              Nenhum usuário encontrado.
+            </div>
+          )}
+          <div className="space-y-3">
+            {!loading &&
+              visibleUsers.map((u, i) => (
+                <motion.div
+                  key={u.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.035 }}
+                  className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow">
+                      {u.name.split(' ').slice(0, 2).map((s) => s[0]?.toUpperCase()).join('') || 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900 break-words">{u.name}</div>
+                      <div className="text-sm text-gray-700 break-words">{u.email}</div>
+                      <div className="text-sm text-gray-600">{u.phone || '-'}</div>
+                      <div className="mt-2">
+                        <label className="block text-xs text-gray-500 mb-1">Permissão</label>
+                        <select
+                          disabled={busyId === u.id || roles.length === 0}
+                          className="w-full rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm outline-none focus:ring-2 focus:ring-indigo-300"
+                          value={userRoleName(u)}
+                          onChange={(e) => onChangeRole(u, e.target.value as Role['name'])}
+                          aria-label={`Alterar permissão de ${u.name}`}
+                        >
+                          {['comum', 'admin', 'superadmin']
+                            .filter((r) => roles.some((x) => x.name === r))
+                            .map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setEditing(u)}
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm"
+                      aria-label={`Editar ${u.name}`}
+                    >
+                      <PencilSquareIcon className="h-5 w-5" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`Excluir ${u.name}?`)) return;
+                        await onDelete(u.id);
+                      }}
+                      disabled={busyId === u.id}
+                      className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-700 shadow-sm disabled:opacity-50"
+                      aria-label={`Excluir ${u.name}`}
+                    >
+                      {busyId === u.id ? (
+                        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" />
+                        </svg>
+                      ) : (
+                        <TrashIcon className="h-5 w-5" />
+                      )}
+                      Excluir
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+          </div>
+        </motion.div>
       </div>
 
       {/* MODAL EDITAR */}
@@ -244,6 +335,7 @@ const Row = memo(function Row({
           whileHover={{ scale: 1.05, rotate: 1 }}
           className="mt-0.5 grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow"
           aria-hidden
+          title={u.name}
         >
           {u.name.split(' ').slice(0, 2).map((s) => s[0]?.toUpperCase()).join('') || 'U'}
         </motion.div>
@@ -261,12 +353,16 @@ const Row = memo(function Row({
 
       {/* Email */}
       <div className="min-w-0 pr-2">
-        <div className="truncate text-gray-800" title={u.email}>{u.email}</div>
+        <div className="truncate text-gray-800" title={u.email}>
+          {u.email}
+        </div>
       </div>
 
       {/* Telefone */}
       <div className="min-w-0 pr-2">
-        <div className="truncate text-gray-800" title={u.phone || '-'}>{u.phone || '-'}</div>
+        <div className="truncate text-gray-800" title={u.phone || '-'}>
+          {u.phone || '-'}
+        </div>
       </div>
 
       {/* Permissão */}
@@ -279,13 +375,17 @@ const Row = memo(function Row({
             onChange={(e) => onChangeRole(e.target.value as Role['name'])}
             aria-label={`Alterar permissão de ${u.name}`}
           >
-            {showRole.map((r) => <option key={r} value={r}>{r}</option>)}
+            {showRole.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
           </select>
           <span className="pointer-events-none absolute -inset-0.5 -z-10 rounded-full opacity-0 blur-md transition group-hover:opacity-40 bg-gradient-to-r from-indigo-500/30 via-purple-500/30 to-pink-500/30" />
         </div>
       </div>
 
-      {/* Ações – largura fixa para não cortar */}
+      {/* Ações */}
       <div className="ml-auto flex min-w-[230px] items-center justify-end gap-2 pr-2">
         <button
           onClick={onEdit}
@@ -301,7 +401,14 @@ const Row = memo(function Row({
           className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-sm text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50"
           aria-label={`Excluir ${u.name}`}
         >
-          <TrashIcon className="h-5 w-5" />
+          {busy ? (
+            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" />
+            </svg>
+          ) : (
+            <TrashIcon className="h-5 w-5" />
+          )}
           Excluir
         </button>
       </div>
@@ -310,7 +417,7 @@ const Row = memo(function Row({
 });
 
 /* =====================
-   Skeleton de carregamento
+   Skeleton de carregamento (desktop)
    ===================== */
 
 function SkeletonRows() {
@@ -337,6 +444,29 @@ function SkeletonRows() {
             <div className="h-8 w-20 animate-pulse rounded-full bg-gray-200" />
           </div>
         </motion.div>
+      ))}
+    </div>
+  );
+}
+
+/* =====================
+   Skeleton mobile (cards)
+   ===================== */
+function MobileSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 animate-pulse rounded-xl bg-gray-200" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-40 animate-pulse rounded bg-gray-200" />
+              <div className="h-4 w-56 animate-pulse rounded bg-gray-200" />
+              <div className="h-4 w-28 animate-pulse rounded bg-gray-200" />
+            </div>
+          </div>
+          <div className="mt-3 h-8 w-40 animate-pulse rounded-full bg-gray-200" />
+        </div>
       ))}
     </div>
   );

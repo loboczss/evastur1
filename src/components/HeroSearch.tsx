@@ -1,14 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  CalendarIcon,
-  PhoneIcon,
-  UserIcon,
-  MapPinIcon,
-  PaperAirplaneIcon,
-} from '@heroicons/react/24/outline';
-import EditableText from '@/components/EditableText';
+import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Calendar, Phone, User, MapPin, SendHorizonal, Plane } from 'lucide-react';
 
 type SearchForm = {
   origem: string;
@@ -19,7 +13,10 @@ type SearchForm = {
   telefone: string;
 };
 
+type TripType = 'round' | 'oneway';
+
 export default function HeroSearch() {
+  const [tripType, setTripType] = useState<TripType>('round');
   const [form, setForm] = useState<SearchForm>({
     origem: '',
     destino: '',
@@ -29,49 +26,82 @@ export default function HeroSearch() {
     telefone: '',
   });
 
+  const inputBase =
+    'w-full h-12 rounded-xl border border-white/30 bg-white/85 px-4 outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition text-sm backdrop-blur';
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: integrar com /api/orcamentos ou /api/leads (Prisma)
-    console.log('Form (placeholder):', form);
-    alert('Form pronto pra integrar ao DB 😉');
+    if (!form.origem || !form.destino || !form.ida || (tripType === 'round' && !form.volta)) {
+      alert('Preencha origem, destino e data(s) para pesquisar.');
+      return;
+    }
+    console.log({ tripType, ...form });
+    alert('Busca pronta para integrar ao backend.');
   };
 
-  const inputBase =
-    'w-full h-12 rounded-lg border border-gray-300 bg-white/80 px-4 outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition text-sm';
+  const subtitle = useMemo(
+    () => (tripType === 'round' ? 'Compare ida e volta instantaneamente.' : 'Encontre a melhor tarifa só de ida.'),
+    [tripType]
+  );
 
   return (
     <section className="relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100" />
-      <div className="relative max-w-6xl mx-auto px-6 pt-28 pb-16">
-        {/* Título + subtítulo */}
-        <div className="text-center mb-10">
-          <EditableText
-            as="h1"
-            id="home.hero.title"
-            defaultContent="[Título principal do banco]"
-            className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-4"
-          />
-          <EditableText
-            as="p"
-            id="home.hero.subtitle"
-            defaultContent="[Descrição principal curta do banco]"
-            className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto"
-          />
+      <motion.form
+        onSubmit={onSubmit}
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6 }}
+        className="
+          relative isolate w-full max-w-2xl
+          rounded-3xl border border-white/20 bg-white/15 p-6 shadow-2xl backdrop-blur-xl ring-1 ring-white/20
+          /* margem pequena interna p/ não encostar no fade inferior do hero */
+          mt-2
+        "
+      >
+        {/* brilho sutil */}
+        <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-white/0" />
+
+        {/* Header */}
+        <div className="relative mb-4">
+          <div className="flex items-center gap-2 text-white/95">
+            <div className="rounded-lg bg-white/20 p-2 ring-1 ring-white/30">
+              <Plane size={18} />
+            </div>
+            <h3 className="text-lg font-bold drop-shadow">Busque suas passagens com a Evastur</h3>
+          </div>
+          <p className="mt-1 text-sm text-white/85">{subtitle}</p>
         </div>
 
-        {/* GRID: mobile 1 col, tablet 2 cols, desktop 6 cols */}
-        <form
-          onSubmit={onSubmit}
-          className="grid gap-4 rounded-2xl bg-white/90 backdrop-blur-md p-6 shadow-xl
-                     grid-cols-1 sm:grid-cols-2 lg:grid-cols-6"
-        >
-          {/* Origem */}
-          <div className="min-w-0">
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Origem</label>
+        {/* Tipo de viagem */}
+        <div className="relative mb-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setTripType('round')}
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+              tripType === 'round' ? 'bg-white text-gray-900 shadow' : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            Ida e volta
+          </button>
+          <button
+            type="button"
+            onClick={() => setTripType('oneway')}
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+              tripType === 'oneway' ? 'bg-white text-gray-900 shadow' : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            Só ida
+          </button>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-white/90">Origem</label>
             <div className="relative">
-              <MapPinIcon className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <MapPin className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
               <input
-                placeholder="[Cidade de origem]"
+                placeholder="Ex.: São Paulo (GRU)"
                 className={`${inputBase} pl-10`}
                 value={form.origem}
                 onChange={(e) => setForm({ ...form, origem: e.target.value })}
@@ -79,14 +109,12 @@ export default function HeroSearch() {
               />
             </div>
           </div>
-
-          {/* Destino */}
-          <div className="min-w-0">
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Destino</label>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-white/90">Destino</label>
             <div className="relative">
-              <MapPinIcon className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <MapPin className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
               <input
-                placeholder="[Cidade de destino]"
+                placeholder="Ex.: Fortaleza (FOR)"
                 className={`${inputBase} pl-10`}
                 value={form.destino}
                 onChange={(e) => setForm({ ...form, destino: e.target.value })}
@@ -95,11 +123,10 @@ export default function HeroSearch() {
             </div>
           </div>
 
-          {/* Ida */}
-          <div className="min-w-0">
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Ida</label>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-white/90">Ida</label>
             <div className="relative">
-              <CalendarIcon className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <Calendar className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
               <input
                 type="date"
                 className={`${inputBase} pl-10`}
@@ -109,27 +136,27 @@ export default function HeroSearch() {
             </div>
           </div>
 
-          {/* Volta */}
-          <div className="min-w-0">
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Volta</label>
-            <div className="relative">
-              <CalendarIcon className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <input
-                type="date"
-                className={`${inputBase} pl-10`}
-                value={form.volta}
-                onChange={(e) => setForm({ ...form, volta: e.target.value })}
-              />
+          {tripType === 'round' && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-white/90">Volta</label>
+              <div className="relative">
+                <Calendar className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
+                <input
+                  type="date"
+                  className={`${inputBase} pl-10`}
+                  value={form.volta}
+                  onChange={(e) => setForm({ ...form, volta: e.target.value })}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Nome */}
-          <div className="min-w-0">
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Nome</label>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-white/90">Nome</label>
             <div className="relative">
-              <UserIcon className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <User className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
               <input
-                placeholder="[Seu nome]"
+                placeholder="Como podemos te chamar?"
                 className={`${inputBase} pl-10`}
                 value={form.nome}
                 onChange={(e) => setForm({ ...form, nome: e.target.value })}
@@ -138,15 +165,14 @@ export default function HeroSearch() {
             </div>
           </div>
 
-          {/* Telefone */}
-          <div className="min-w-0">
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Telefone</label>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-white/90">Telefone</label>
             <div className="relative">
-              <PhoneIcon className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <Phone className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
               <input
                 type="tel"
                 inputMode="tel"
-                placeholder="[DDD+Número]"
+                placeholder="DDD + número"
                 className={`${inputBase} pl-10`}
                 value={form.telefone}
                 onChange={(e) => setForm({ ...form, telefone: e.target.value })}
@@ -154,26 +180,24 @@ export default function HeroSearch() {
               />
             </div>
           </div>
+        </div>
 
-          {/* Botão – ocupa a linha inteira */}
-          <div className="sm:col-span-2 lg:col-span-6 mt-2">
-            <button
-              type="submit"
-              className="group inline-flex items-center justify-center gap-2 w-full rounded-full px-8 py-4 text-white text-lg font-semibold
-                         bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-[length:200%_200%]
-                         shadow-md hover:shadow-lg transition-all duration-500 hover:scale-[1.01] animate-gradient-x"
-            >
-              <PaperAirplaneIcon className="h-5 w-5 -rotate-45 transition-transform group-hover:-translate-y-0.5" />
-              <EditableText
-                as="span"
-                id="home.hero.button"
-                defaultContent="[Texto botão do banco]"
-                className="inline"
-              />
-            </button>
-          </div>
-        </form>
-      </div>
+        <motion.button
+          type="submit"
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.985 }}
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-white text-lg font-semibold
+                     bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600
+                     shadow-md hover:shadow-lg transition-all duration-300"
+        >
+          <SendHorizonal className="h-5 w-5 -rotate-12" />
+          Buscar passagens agora
+        </motion.button>
+
+        <p className="mt-2 text-[11px] text-white/85">
+          Sem taxas ocultas. Tarifas atualizadas com cias aéreas e parceiros.
+        </p>
+      </motion.form>
     </section>
   );
 }
