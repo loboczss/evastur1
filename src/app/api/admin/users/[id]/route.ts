@@ -7,7 +7,8 @@ import { prisma } from '@/lib/prisma';
 type Ctx = { params: { id: string } };
 
 async function getSessionUser() {
-  const sid = cookies().get('session_id')?.value;
+  const cookieStore = await cookies();
+  const sid = cookieStore.get('session_id')?.value;
   if (!sid) return null;
   const session = await prisma.authSession.findUnique({
     where: { id: sid },
