@@ -1,9 +1,16 @@
 // src/app/api/leads/[id]/route.ts
 import type { Prisma } from '@prisma/client';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-type Ctx = { params: { id: string } };
+type ParamsCtx = { params: Promise<{ id: string }> };
+
+async function parseId(context: ParamsCtx) {
+  const { id: rawId } = await context.params;
+  const id = Number(rawId);
+  return id;
+}
 
 type LeadUpdatePayload = Partial<{
   name: string;
@@ -22,9 +29,8 @@ const toNullableString = (value: unknown) => {
   return undefined;
 };
 
-export async function GET(_req: Request, context: Ctx) {
-  const { id: rawId } = context.params;
-  const id = Number(rawId);
+export async function GET(_req: NextRequest, context: ParamsCtx) {
+  const id = await parseId(context);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'id inválido' }, { status: 400 });
   }
@@ -33,9 +39,8 @@ export async function GET(_req: Request, context: Ctx) {
   return NextResponse.json(lead);
 }
 
-export async function PUT(req: Request, context: Ctx) {
-  const { id: rawId } = context.params;
-  const id = Number(rawId);
+export async function PUT(req: NextRequest, context: ParamsCtx) {
+  const id = await parseId(context);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'id inválido' }, { status: 400 });
   }
@@ -60,9 +65,8 @@ export async function PUT(req: Request, context: Ctx) {
   }
 }
 
-export async function DELETE(_req: Request, context: Ctx) {
-  const { id: rawId } = context.params;
-  const id = Number(rawId);
+export async function DELETE(_req: NextRequest, context: ParamsCtx) {
+  const id = await parseId(context);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'id inválido' }, { status: 400 });
   }

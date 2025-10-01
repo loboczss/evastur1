@@ -1,3 +1,4 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
@@ -7,14 +8,21 @@ const prisma = new PrismaClient();
  * GET /api/admin/roles/[id]
  * Retorna um papel específico com permissões
  */
+type ParamsCtx = { params: Promise<{ id: string }> };
+
+async function parseId(context: ParamsCtx) {
+  const { id } = await context.params;
+  return Number(id);
+}
+
 export async function GET(
-  request: Request,
-  context: { params: { id: string } }
+  _request: NextRequest,
+  context: ParamsCtx
 ) {
   try {
-    const { id } = context.params;
+    const id = await parseId(context);
     const role = await prisma.role.findUnique({
-      where: { id: Number(id) },
+      where: { id },
       include: { permissions: { include: { permission: true } } },
     });
 
@@ -35,16 +43,16 @@ export async function GET(
  * Body esperado: { name?, description?, permissionIds?: number[] }
  */
 export async function PUT(
-  request: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  context: ParamsCtx
 ) {
   try {
-    const { id } = context.params;
+    const id = await parseId(context);
     const body = await request.json();
     const { name, description, permissionIds } = body;
 
     const updatedRole = await prisma.role.update({
-      where: { id: Number(id) },
+      where: { id },
       data: {
         name,
         description,
@@ -72,13 +80,13 @@ export async function PUT(
  * Remove um papel
  */
 export async function DELETE(
-  request: Request,
-  context: { params: { id: string } }
+  _request: NextRequest,
+  context: ParamsCtx
 ) {
   try {
-    const { id } = context.params;
+    const id = await parseId(context);
     await prisma.role.delete({
-      where: { id: Number(id) },
+      where: { id },
     });
 
     return NextResponse.json({ message: 'Papel deletado com sucesso' }, { status: 200 });

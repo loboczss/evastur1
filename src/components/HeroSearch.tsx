@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { MapPin, Calendar, Users, Search, Plane } from 'lucide-react';
 
 export default function HeroSearch() {
@@ -8,7 +8,7 @@ export default function HeroSearch() {
   const [dataVolta, setDataVolta] = useState('');
   const [passageiros, setPassageiros] = useState(2);
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: ReactMouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log({ origem, destino, dataIda, dataVolta, passageiros });
   };
