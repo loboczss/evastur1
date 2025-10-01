@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useEditMode } from '@/hooks/useEditMode';
 
 type CurrentUser = { id: number; name: string; email: string; roles: string[] } | null;
 
@@ -13,6 +14,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<CurrentUser>(null);
   const [loadingMe, setLoadingMe] = useState(true);
+  const { isEditing, enableEdit, disableEdit } = useEditMode();
   const router = useRouter();
 
   // shrink + sombra ao rolar
@@ -45,6 +47,17 @@ export default function Navbar() {
     () => !!user?.roles?.some((r) => r === 'admin' || r === 'superadmin'),
     [user]
   );
+  const isSuperAdmin = useMemo(() => !!user?.roles?.some((r) => r === 'superadmin'), [user]);
+
+  const handleEditButtonClick = () => {
+    if (!isSuperAdmin) return;
+    if (isEditing) {
+      disableEdit();
+    } else {
+      enableEdit();
+    }
+    setMenuOpen(false);
+  };
 
   const handleLogout = async () => {
     try {
@@ -127,6 +140,23 @@ export default function Navbar() {
             </motion.div>
           ))}
 
+          {!loadingMe && isSuperAdmin && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <button
+                type="button"
+                onClick={handleEditButtonClick}
+                className={`rounded-full px-5 py-2 font-semibold shadow-md transition-all focus:outline-none focus:ring-2 ${
+                  isEditing
+                    ? 'text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-300'
+                    : 'text-gray-800 bg-white border border-gray-200 hover:shadow-lg focus:ring-gray-300'
+                }`}
+                aria-pressed={isEditing}
+              >
+                {isEditing ? 'Sair do modo de edição' : 'Editar Página'}
+              </button>
+            </motion.div>
+          )}
+
           {/* Admin visível só para admin/superadmin */}
           {!loadingMe && isAdmin && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
@@ -208,6 +238,22 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                 ))}
+
+                {/* Editar página (apenas superadmin) */}
+                {!loadingMe && isSuperAdmin && (
+                  <button
+                    type="button"
+                    onClick={handleEditButtonClick}
+                    className={`rounded-full px-4 py-2 text-center font-semibold shadow-md transition-all ${
+                      isEditing
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        : 'bg-white text-gray-800 border border-gray-200 hover:shadow-lg'
+                    }`}
+                    aria-pressed={isEditing}
+                  >
+                    {isEditing ? 'Sair do modo de edição' : 'Editar Página'}
+                  </button>
+                )}
 
                 {/* Admin no mobile (apenas admin/superadmin) */}
                 {!loadingMe && isAdmin && (

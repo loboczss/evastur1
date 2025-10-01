@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import PackageModal from '@/components/PackageModal';
 import AddPackageButton from '@/components/packages/AddPackageButton'; // ✅ botão com checagem de permissão
 import type { PackageDTO } from '@/types/package';
 import { usePackages } from '@/hooks/usePackages';
 import { useCanManagePackages } from '@/hooks/useCanManagePackages';
+import { useEditMode } from '@/hooks/useEditMode';
 
 export default function PacotesPage() {
   const { packages: pacotes, loading, error, removeLocal } = usePackages();
@@ -14,10 +15,22 @@ export default function PacotesPage() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<PackageDTO | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { isEditing } = useEditMode();
+  const [heroBackground, setHeroBackground] = useState('/pacotes-hero.jpg');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
 
   const { scrollYProgress } = useScroll();
   // Parallax suave na hero (imagem “sobe” levemente ao rolar)
   const yHero = useTransform(scrollYProgress, [0, 0.3], [0, -40]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   const abrir = (pkg: PackageDTO) => {
     setCurrent(pkg);
@@ -47,12 +60,26 @@ export default function PacotesPage() {
     }
   };
 
+  const handleBackgroundChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
+
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+    setHeroBackground(url);
+    event.target.value = '';
+  };
+
   return (
     <main className="min-h-screen bg-white text-gray-900">
       {/* HERO com bg + overlay + parallax */}
       <section className="relative h-[56vh] min-h-[420px] w-full overflow-hidden">
         <motion.div
-          style={{ y: yHero, backgroundImage: `url('/pacotes-hero.jpg')` }}
+          style={{ y: yHero, backgroundImage: `url('${heroBackground}')` }}
           className="absolute inset-0 bg-center bg-cover"
         />
         {/* overlays para contraste */}
@@ -86,8 +113,26 @@ export default function PacotesPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15, duration: 0.5 }}
-                className="self-start sm:self-end"
+                className="flex flex-col items-start gap-2 self-start sm:self-end"
               >
+                {isEditing && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-full border border-white/70 bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/40 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    >
+                      Mudar Foto de Fundo
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleBackgroundChange}
+                    />
+                  </>
+                )}
                 <AddPackageButton />
               </motion.div>
             </div>
