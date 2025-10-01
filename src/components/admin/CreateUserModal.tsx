@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Role } from '@/hooks/useAdminUsers';
 import {
@@ -244,13 +245,13 @@ function Field({
   error,
   helper,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
-  inputRef?: React.RefObject<HTMLInputElement>;
+  inputRef?: RefObject<HTMLInputElement | null>;
   required?: boolean;
   error?: boolean;
   helper?: string;

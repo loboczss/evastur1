@@ -70,7 +70,11 @@ export default function Navbar() {
 
   const handleEditButtonClick = () => {
     if (!isSuperAdmin) return;
-    isEditing ? disableEdit() : enableEdit();
+    if (isEditing) {
+      disableEdit();
+    } else {
+      enableEdit();
+    }
     setMenuOpen(false);
   };
 
