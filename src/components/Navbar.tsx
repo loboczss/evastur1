@@ -251,7 +251,7 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25 }}
-            className="md:hidden fixed left-0 right-0 mt-[var(--header-h)] px-3"
+            className="md:hidden fixed inset-x-0 top-[var(--header-h)] z-[60] px-3"
           >
             <div className="rounded-2xl bg-white/95 p-6 shadow-xl ring-1 ring-black/5 backdrop-blur">
               <div className="flex flex-col gap-3 text-[16px] font-medium text-gray-800">
