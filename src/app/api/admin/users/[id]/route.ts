@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
-type Ctx = { params: Promise<{ id: string }> };
+type Ctx = { params: { id: string } };
 
 async function getSessionUser() {
   const cookieStore = await cookies();
@@ -22,7 +22,7 @@ async function getSessionUser() {
 /** GET /api/admin/users/[id] */
 export async function GET(_req: Request, context: Ctx) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const user = await prisma.user.findUnique({
       where: { id: Number(id) },
       include: { roles: { include: { role: true } } },
@@ -53,7 +53,7 @@ export async function PUT(req: Request, context: Ctx) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    const { id } = await context.params;
+    const { id } = context.params;
     const body = (await req.json()) as UpdatePayload | null;
     const { name, email, phone, isActive, roleIds, password } = body ?? {};
     const data: Prisma.UserUpdateInput = {};
@@ -112,7 +112,7 @@ export async function DELETE(_req: Request, context: Ctx) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    const { id } = await context.params;
+    const { id } = context.params;
     await prisma.user.delete({ where: { id: Number(id) } });
     return NextResponse.json({ message: 'Usuário deletado com sucesso' }, { status: 200 });
   } catch (e) {
