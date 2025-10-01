@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const email = "admin@evastur.com";
-  const password = "123456"; // ⚠️ troque depois!
+  const password = "admin123"; // ⚠️ troque depois!
 
   // Gera hash da senha
   const hash = await bcrypt.hash(password, 10);
