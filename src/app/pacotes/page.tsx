@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import PackageModal from '@/components/PackageModal';
 import AddPackageButton from '@/components/packages/AddPackageButton'; // ✅ botão com checagem de permissão
@@ -8,7 +8,19 @@ import type { PackageDTO } from '@/types/package';
 import { usePackages } from '@/hooks/usePackages';
 import { useCanManagePackages } from '@/hooks/useCanManagePackages';
 import { useEditMode } from '@/hooks/useEditMode';
+import { usePathname } from 'next/navigation';
 import EditableText from '@/components/EditableText';
+
+const HERO_BACKGROUND_DEFAULT = '/pacotes-hero.jpg';
+const HERO_BACKGROUND_KEY = 'packages.hero.background';
+
+function sanitizeBackgroundSource(value: string | null | undefined) {
+  if (!value) return HERO_BACKGROUND_DEFAULT;
+  const trimmed = value.trim();
+  if (trimmed.startsWith('data:image/')) return trimmed;
+  if (trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('/')) return trimmed;
+  return HERO_BACKGROUND_DEFAULT;
+}
 
 export default function PacotesPage() {
   const { packages: pacotes, loading, error, removeLocal } = usePackages();
@@ -16,22 +28,72 @@ export default function PacotesPage() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<PackageDTO | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { isEditing } = useEditMode();
-  const [heroBackground, setHeroBackground] = useState('/pacotes-hero.jpg');
+  const { isEditing, registerEditable, unregisterEditable } = useEditMode();
+  const pathname = usePathname();
+  const [heroBackground, setHeroBackground] = useState(HERO_BACKGROUND_DEFAULT);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
+  const backgroundEditableRef = useRef<HTMLSpanElement | null>(null);
 
   const { scrollYProgress } = useScroll();
   // Parallax suave na hero (imagem “sobe” levemente ao rolar)
   const yHero = useTransform(scrollYProgress, [0, 0.3], [0, -40]);
+  const backgroundCssValue = useMemo(() => `url("${heroBackground.replace(/"/g, '\\"')}")`, [heroBackground]);
+  const backgroundRegistryKey = useMemo(
+    () => `${pathname}::${HERO_BACKGROUND_KEY}`,
+    [pathname]
+  );
+
+  const applyBackgroundValue = useCallback(
+    (value: string | null | undefined) => {
+      const normalized = sanitizeBackgroundSource(value);
+      setHeroBackground(normalized);
+      if (backgroundEditableRef.current) {
+        backgroundEditableRef.current.textContent = normalized;
+      }
+    },
+    []
+  );
 
   useEffect(() => {
+    const node = backgroundEditableRef.current;
+    if (!node) return;
+
+    registerEditable(backgroundRegistryKey, {
+      element: node,
+      path: pathname,
+      editableId: HERO_BACKGROUND_KEY,
+      setContent: applyBackgroundValue,
+    });
+
     return () => {
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-      }
+      unregisterEditable(backgroundRegistryKey);
     };
-  }, []);
+  }, [applyBackgroundValue, backgroundRegistryKey, pathname, registerEditable, unregisterEditable]);
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/content?path=${encodeURIComponent(pathname)}&key=${encodeURIComponent(HERO_BACKGROUND_KEY)}`,
+          { cache: 'no-store' }
+        );
+        if (!res.ok) throw new Error('Falha ao carregar imagem de fundo');
+        const data = await res.json();
+        if (!active) return;
+        const saved = typeof data?.content === 'string' ? data.content : null;
+        applyBackgroundValue(saved);
+      } catch {
+        if (!active) return;
+        applyBackgroundValue(null);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [applyBackgroundValue, pathname]);
 
   const abrir = (pkg: PackageDTO) => {
     setCurrent(pkg);
@@ -65,22 +127,42 @@ export default function PacotesPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current);
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Selecione uma imagem de até 2MB.');
+      event.target.value = '';
+      return;
     }
 
-    const url = URL.createObjectURL(file);
-    objectUrlRef.current = url;
-    setHeroBackground(url);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        applyBackgroundValue(reader.result);
+      } else {
+        alert('Não foi possível processar a imagem selecionada.');
+      }
+    };
+    reader.onerror = () => {
+      alert('Não foi possível processar a imagem selecionada.');
+    };
+    reader.readAsDataURL(file);
     event.target.value = '';
   };
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
+      <span
+        ref={backgroundEditableRef}
+        className="hidden"
+        data-editable-id={HERO_BACKGROUND_KEY}
+        data-editable-path={pathname}
+        aria-hidden="true"
+      >
+        {heroBackground}
+      </span>
       {/* HERO com bg + overlay + parallax */}
       <section className="relative h-[56vh] min-h-[420px] w-full overflow-hidden">
         <motion.div
-          style={{ y: yHero, backgroundImage: `url('${heroBackground}')` }}
+          style={{ y: yHero, backgroundImage: backgroundCssValue }}
           className="absolute inset-0 bg-center bg-cover"
         />
         {/* overlays para contraste */}
