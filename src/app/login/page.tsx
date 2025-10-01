@@ -22,9 +22,14 @@ export default function LoginPage() {
     const data = await r.json();
     setBusy(false);
     if (!r.ok) { setErr(data?.error ?? 'Falha no login'); return; }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('auth-change'));
+    }
     // Decide o destino por papel
     const roles: string[] = data?.roles ?? [];
-    router.push(roles.includes('admin') || roles.includes('superadmin') ? '/admin' : '/');
+    const destination = roles.includes('admin') || roles.includes('superadmin') ? '/admin' : '/';
+    router.push(destination);
+    router.refresh();
   };
 
   return (

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useEditMode } from '@/hooks/useEditMode';
@@ -14,8 +14,15 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<CurrentUser>(null);
   const [loadingMe, setLoadingMe] = useState(true);
+  const isMountedRef = useRef(true);
   const { isEditing, enableEdit, disableEdit } = useEditMode();
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // shrink + sombra ao rolar
   useEffect(() => {
@@ -25,23 +32,37 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const fetchCurrentUser = useCallback(async () => {
+    setLoadingMe(true);
+    try {
+      const r = await fetch('/api/auth/me', { cache: 'no-store', credentials: 'include' });
+      const data = await r.json();
+      if (!isMountedRef.current) return;
+      setUser(data?.user ?? null);
+    } catch {
+      if (!isMountedRef.current) return;
+      setUser(null);
+    } finally {
+      if (!isMountedRef.current) return;
+      setLoadingMe(false);
+    }
+  }, []);
+
   // checa sessão atual
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const r = await fetch('/api/auth/me', { cache: 'no-store' });
-        const data = await r.json();
-        if (!alive) return;
-        setUser(data?.user ?? null);
-      } catch {
-        setUser(null);
-      } finally {
-        if (alive) setLoadingMe(false);
-      }
-    })();
-    return () => { alive = false; };
-  }, []);
+    fetchCurrentUser();
+  }, [fetchCurrentUser]);
+
+  useEffect(() => {
+    const onAuthChange = () => {
+      fetchCurrentUser();
+    };
+
+    window.addEventListener('auth-change', onAuthChange);
+    return () => {
+      window.removeEventListener('auth-change', onAuthChange);
+    };
+  }, [fetchCurrentUser]);
 
   const isAdmin = useMemo(
     () => !!user?.roles?.some((r) => r === 'admin' || r === 'superadmin'),
@@ -67,6 +88,9 @@ export default function Navbar() {
     setMenuOpen(false);
     router.push('/');
     router.refresh();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('auth-change'));
+    }
   };
 
   const navLeft = [
