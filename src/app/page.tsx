@@ -4,213 +4,252 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { ArrowRight, Plane, Hotel, Ship, MapPin, Sparkles, TicketPercent, Clock } from 'lucide-react';
+import { ArrowRight, Plane, Hotel, Ship, MapPin, Sparkles, TicketPercent, Clock, Star, Users, Shield, ChevronRight } from 'lucide-react';
 import { usePackages } from '@/hooks/usePackages';
 import type { PackageDTO } from '@/types/package';
 
-// Card de pesquisa central (dinâmico p/ evitar SSR do framer)
 const HeroSearch = dynamic(() => import('@/components/HeroSearch'), { ssr: false });
 
-/** Imagens do hero (curadoria “premium”) */
 const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1920&q=80', // praia turquesa
-  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1920&q=80', // cidade noite
-  'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?auto=format&fit=crop&w=1920&q=80', // montanha neblina
-  'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1920&q=80', // cruzeiro/porto
+  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1920&q=80',
 ];
 
 export default function HomePage() {
-  // Parallax + Ken Burns leve
   const { scrollYProgress } = useScroll();
-  const yHero = useTransform(scrollYProgress, [0, 0.4], [0, -50]);
+  const yHero = useTransform(scrollYProgress, [0, 0.4], [0, -100]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.3]);
 
-  // Cross-fade de fundo
   const [bgIndex, setBgIndex] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setBgIndex((i) => (i + 1) % HERO_IMAGES.length), 6500);
     return () => clearInterval(id);
   }, []);
 
-  // Benefícios (ícones)
   const BENEFITS = useMemo(
     () => [
-      { icon: Plane,  title: 'Passagens aéreas',       text: 'Rotas e tarifas excelentes, sem labirinto.' },
-      { icon: Hotel,  title: 'Hotéis & resorts',        text: 'Curadoria real, localização e avaliações de verdade.' },
-      { icon: Ship,   title: 'Cruzeiros',               text: 'Entretenimento completo e roteiros inesquecíveis.' },
-      { icon: MapPin, title: 'Passeios & experiências', text: 'Viva o destino além do cartão-postal.' },
-      { icon: TicketPercent, title: 'Ofertas legítimas', text: 'Condições transparentes e sem pegadinhas.' },
-      { icon: Sparkles, title: 'Sob medida',            text: 'Roteiros do seu jeito, do início ao fim.' },
+      { icon: Plane, title: 'Passagens aéreas', text: 'Rotas e tarifas excelentes, sem labirinto.', color: 'from-blue-500 to-cyan-500' },
+      { icon: Hotel, title: 'Hotéis & resorts', text: 'Curadoria real, localização e avaliações de verdade.', color: 'from-purple-500 to-pink-500' },
+      { icon: Ship, title: 'Cruzeiros', text: 'Entretenimento completo e roteiros inesquecíveis.', color: 'from-orange-500 to-red-500' },
+      { icon: MapPin, title: 'Passeios & experiências', text: 'Viva o destino além do cartão-postal.', color: 'from-green-500 to-teal-500' },
+      { icon: TicketPercent, title: 'Ofertas legítimas', text: 'Condições transparentes e sem pegadinhas.', color: 'from-indigo-500 to-purple-500' },
+      { icon: Sparkles, title: 'Sob medida', text: 'Roteiros do seu jeito, do início ao fim.', color: 'from-pink-500 to-rose-500' },
     ],
     []
   );
 
-  // “Alguns pacotes” (preview)
   const { packages: pacotes, loading, error } = usePackages();
   const preview: PackageDTO[] = useMemo(() => (pacotes || []).slice(0, 6), [pacotes]);
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 pt-safe-header">
-      {/* ===========================
-          HERO — agora com altura segura p/ mobile
-         =========================== */}
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 text-gray-900 pt-safe-header">
+      {/* HERO SECTION - Ultra Modern */}
       <section
-  id="topo"
-  className="
-    relative isolate
-    w-full overflow-hidden
-    scroll-mt-[var(--header-h)]
-    min-h-[calc(100svh-var(--header-h))] md:min-h-[720px]
-    pt-6 sm:pt-8 md:pt-10
-    pb-28 sm:pb-16 md:pb-12
-  "
->
-  {/* Fundo animado (cross-fade + parallax + ken burns) */}
-  <div className="absolute inset-0 z-0">
-    <AnimatePresence initial={false} mode="sync">
-      <motion.div
-        key={bgIndex}
-        style={{ y: yHero, backgroundImage: `url("${HERO_IMAGES[bgIndex]}")` }}
-        className="absolute inset-0 bg-center bg-cover"
-        initial={{ opacity: 0, scale: 1.05 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 1.05 }}
-        transition={{ duration: 1.25, ease: 'easeInOut' }}
-      />
-    </AnimatePresence>
-
-    {/* Partículas / glow sutil */}
-    <motion.div
-      className="absolute inset-0 pointer-events-none"
-      initial={{ opacity: 0.28 }}
-      animate={{ opacity: [0.28, 0.4, 0.28] }}
-      transition={{ duration: 8, repeat: Infinity }}
-      style={{
-        background:
-          'radial-gradient(1200px 600px at 30% 20%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(1000px 600px at 70% 70%, rgba(255,255,255,0.12), transparent 60%)',
-      }}
-    />
-  </div>
-
-  {/* Overlays (não bloqueiam clique e ficam na mesma camada do BG) */}
-  <div className="absolute inset-0 pointer-events-none z-0 bg-black/35" />
-  {/* FADE apenas inferior */}
-  <div className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none z-0 bg-gradient-to-b from-transparent to-white" />
-
-  {/* Conteúdo do hero (sempre acima do BG/overlays) */}
-  <div className="relative z-10 flex h-full items-end">
-    <div className="max-w-6xl mx-auto px-6 w-full">
-      <div className="grid lg:grid-cols-2 gap-10 items-end">
-        {/* Bloco esquerdo */}
-        <div className="max-w-2xl">
-          <motion.div
-            className="mb-4 flex lg:block justify-center lg:justify-start"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/evastur-logo.png"
-              alt="Evastur"
-              className="h-12 w-auto drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
+        id="topo"
+        className="relative isolate w-full overflow-hidden scroll-mt-[var(--header-h)] min-h-[calc(100svh-var(--header-h))] md:min-h-[850px]"
+      >
+        {/* Animated Background with Enhanced Effects */}
+        <motion.div style={{ opacity: heroOpacity }} className="absolute inset-0 z-0">
+          <AnimatePresence initial={false} mode="sync">
+            <motion.div
+              key={bgIndex}
+              style={{ y: yHero, backgroundImage: `url("${HERO_IMAGES[bgIndex]}")` }}
+              className="absolute inset-0 bg-center bg-cover"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ duration: 1.5, ease: 'easeInOut' }}
             />
-          </motion.div>
+          </AnimatePresence>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="text-4xl md:text-6xl font-black tracking-tight text-white drop-shadow"
-          >
-            Sonhos que viram viagens: passagens, cruzeiros, hotéis e experiências.
-          </motion.h1>
+          {/* Animated Gradient Overlay */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{
+              background: [
+                'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)',
+                'linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)',
+                'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)',
+              ],
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+        </motion.div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.6 }}
-            className="mt-3 text-lg md:text-xl text-white/95"
-          >
-            Conte com a Evastur para cuidar de cada detalhe. Você só escolhe para onde quer sorrir primeiro.
-          </motion.p>
+        {/* Glass Morphism Overlay */}
+        <div className="absolute inset-0 z-0 backdrop-blur-[2px] bg-gradient-to-b from-transparent via-transparent to-white" />
 
-          <div className="mt-6 hidden lg:flex gap-3">
-            <a
-              href="#buscar"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-gray-900 shadow hover:shadow-lg transition"
-            >
-              Pesquisar agora
-            </a>
-            <a
-              href="#beneficios"
-              className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/10 px-5 py-3 font-semibold text-white backdrop-blur hover:bg-white/20 transition"
-            >
-              Por que a Evastur?
-            </a>
+        {/* Content Container */}
+        <div className="relative z-10 flex h-full items-center">
+          <div className="max-w-7xl mx-auto px-6 w-full py-20">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              {/* Left Content */}
+              <div className="max-w-2xl">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8, type: "spring" }}
+                  className="mb-8"
+                >
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20">
+                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                    <span className="text-white text-sm font-medium">A melhor agência de viagens do Brasil</span>
+                  </div>
+                </motion.div>
+
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.1 }}
+                  className="text-5xl md:text-7xl font-black tracking-tight text-white leading-[1.1]"
+                >
+                  <span className="bg-gradient-to-r from-white via-white to-gray-200 bg-clip-text text-transparent">
+                    Transforme sonhos
+                  </span>
+                  <br />
+                  <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
+                    em aventuras
+                  </span>
+                </motion.h1>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.8 }}
+                  className="mt-6 text-xl md:text-2xl text-white/90 font-light leading-relaxed"
+                >
+                  Passagens, cruzeiros, hotéis e experiências únicas. Deixe cada detalhe com a gente.
+                </motion.p>
+
+                {/* Stats */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.8 }}
+                  className="mt-10 flex gap-8"
+                >
+                  <div>
+                    <p className="text-3xl font-bold text-white">15K+</p>
+                    <p className="text-sm text-white/80">Clientes felizes</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">50+</p>
+                    <p className="text-sm text-white/80">Destinos</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">4.9★</p>
+                    <p className="text-sm text-white/80">Avaliação</p>
+                  </div>
+                </motion.div>
+
+                {/* CTAs */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.8 }}
+                  className="mt-8 flex flex-wrap gap-4"
+                >
+                  <a
+                    href="#buscar"
+                    className="group relative inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-white text-gray-900 font-semibold overflow-hidden transition-all hover:scale-105"
+                  >
+                    <span className="relative z-10">Começar agora</span>
+                    <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-400 opacity-0 group-hover:opacity-10 transition-opacity" />
+                  </a>
+                  <a
+                    href="#beneficios"
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-white/30 bg-white/5 text-white font-semibold backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/50"
+                  >
+                    Saiba mais
+                  </a>
+                </motion.div>
+              </div>
+
+              {/* Search Card with Glass Effect */}
+              <motion.div
+                id="buscar"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="lg:justify-self-end w-full"
+              >
+                <div className="relative">
+                  <div className="absolute -inset-4 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 rounded-3xl blur-2xl" />
+                  <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+                    <HeroSearch />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
 
-        {/* Card de busca — com respiro real no mobile */}
-        <motion.div
-          id="buscar"
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, delay: 0.1 }}
-          className="lg:justify-self-end w-full mt-10 sm:mt-8 md:mt-6"
-        >
-          <HeroSearch />
-        </motion.div>
-      </div>
-    </div>
-  </div>
+        {/* Progress Indicators */}
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 flex gap-3">
+          {HERO_IMAGES.map((_, i) => (
+            <motion.div
+              key={i}
+              className={`h-2 rounded-full transition-all cursor-pointer ${
+                i === bgIndex ? 'w-12 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
+              }`}
+              whileHover={{ scale: 1.2 }}
+              onClick={() => setBgIndex(i)}
+            />
+          ))}
+        </div>
+      </section>
 
-  {/* Indicadores do background */}
-  <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 flex gap-2">
-    {HERO_IMAGES.map((_, i) => (
-      <div
-        key={i}
-        className={`h-1.5 rounded-full transition-all ${i === bgIndex ? 'w-8 bg-white' : 'w-3 bg-white/70'}`}
-      />
-    ))}
-  </div>
-</section>
-
-      {/* ===========================
-          Benefícios
-         =========================== */}
-      <section id="beneficios" className="relative scroll-mt-[var(--header-h)]">
-        <div className="max-w-6xl mx-auto px-6 py-12">
-          <motion.h2
-            initial={{ opacity: 0, y: 8 }}
+      {/* BENEFITS SECTION - Card Based Design */}
+      <section id="beneficios" className="relative py-24 scroll-mt-[var(--header-h)]">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.6 }}
-            className="text-2xl md:text-3xl font-bold tracking-tight text-center"
+            viewport={{ once: true }}
+            className="text-center mb-16"
           >
-            Por que viajar com a Evastur
-          </motion.h2>
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 text-sm font-semibold mb-4">
+              <Shield className="w-4 h-4" />
+              Garantia de qualidade
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              Por que escolher a Evastur?
+            </h2>
+            <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
+              Somos especialistas em transformar viagens em experiências inesquecíveis
+            </p>
+          </motion.div>
 
-          <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {BENEFITS.map((b, i) => {
               const Icon = b.icon;
               return (
                 <motion.div
                   key={b.title}
-                  initial={{ opacity: 0, y: 14 }}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-60px' }}
-                  transition={{ duration: 0.45, delay: i * 0.03 }}
-                  className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition"
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                  className="group relative"
                 >
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50" />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-xl bg-gray-900 text-white p-2 shadow-sm">
-                        <Icon size={20} />
-                      </div>
-                      <h3 className="text-lg font-semibold">{b.title}</h3>
+                  <div className="relative h-full p-8 rounded-3xl bg-white border border-gray-200 shadow-lg overflow-hidden transition-all hover:shadow-2xl">
+                    {/* Gradient Background on Hover */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${b.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
+                    
+                    {/* Icon with Gradient */}
+                    <div className={`relative inline-flex p-3 rounded-2xl bg-gradient-to-br ${b.color} shadow-lg mb-4`}>
+                      <Icon className="w-6 h-6 text-white" />
                     </div>
-                    <p className="mt-3 text-gray-600">{b.text}</p>
+                    
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">{b.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{b.text}</p>
+                    
+                    {/* Decorative Element */}
+                    <div className={`absolute -bottom-2 -right-2 w-24 h-24 bg-gradient-to-br ${b.color} opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform`} />
                   </div>
                 </motion.div>
               );
@@ -219,132 +258,210 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===========================
-          Prévia: “Alguns pacotes”
-         =========================== */}
-      <section id="pacotes" className="max-w-6xl mx-auto px-6 pb-18 scroll-mt-[var(--header-h)]">
-        <div className="flex items-end justify-between gap-4">
-          <motion.h2
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.6 }}
-            className="text-2xl md:text-3xl font-bold tracking-tight"
-          >
-            Algumas oportunidades para você
-          </motion.h2>
-          <Link
-            href="/pacotes"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-pink-700 hover:text-pink-800 transition"
-          >
-            Ver todos os pacotes <ArrowRight size={16} />
-          </Link>
-        </div>
+      {/* PACKAGES SECTION - Premium Cards */}
+      <section id="pacotes" className="py-24 bg-gradient-to-b from-gray-50 to-white scroll-mt-[var(--header-h)]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-between mb-12">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Destinos em destaque
+              </h2>
+              <p className="mt-2 text-gray-600">Oportunidades imperdíveis selecionadas para você</p>
+            </motion.div>
+            <Link
+              href="/pacotes"
+              className="group inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg transition-all hover:shadow-xl hover:scale-105"
+            >
+              Ver todos
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
 
-        {loading && <p className="mt-6 text-center text-gray-500">Carregando pacotes…</p>}
-        {!loading && error && <p className="mt-6 text-center text-red-500">{error}</p>}
-        {!loading && !error && preview.length === 0 && (
-          <p className="mt-6 text-center text-gray-500">Nenhum pacote disponível no momento.</p>
-        )}
+          {loading && (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent" />
+            </div>
+          )}
 
-        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {preview.map((p, i) => {
-            const capa = p.imagens?.[0];
-            return (
-              <motion.article
-                key={p.id}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ delay: i * 0.04, duration: 0.45 }}
-                whileHover={{ y: -6 }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100"
-              >
-                <div className="relative h-44 w-full overflow-hidden bg-gray-200">
-                  {capa ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={capa} alt={p.nome} className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                      Imagem indisponível
+          {!loading && error && (
+            <div className="text-center py-12 text-red-500 bg-red-50 rounded-2xl">
+              <p>{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && preview.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <Ship className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p>Nenhum pacote disponível no momento.</p>
+            </div>
+          )}
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {preview.map((p, i) => {
+              const capa = p.imagens?.[0];
+              return (
+                <motion.article
+                  key={p.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="group relative"
+                >
+                  <Link href={`/pacotes/${p.id}`}>
+                    <div className="relative h-full bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                      {/* Image Container */}
+                      <div className="relative h-56 overflow-hidden">
+                        {capa ? (
+                          <img 
+                            src={capa} 
+                            alt={p.nome} 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                            <MapPin className="w-12 h-12 text-gray-400" />
+                          </div>
+                        )}
+                        
+                        {/* Overlay Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        
+                        {/* Price Badge */}
+                        <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-white/95 backdrop-blur-md shadow-lg">
+                          <p className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            {p.preco || 'Consulte'}
+                          </p>
+                        </div>
+
+                        {/* Duration Badge */}
+                        <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-white text-sm font-semibold flex items-center gap-1.5">
+                          <Clock className="w-4 h-4" />
+                          {p.dias ? `${p.dias} dias` : 'A definir'}
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-6">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2 line-clamp-1">
+                          {p.nome}
+                        </h3>
+                        
+                        <div className="flex items-center gap-2 text-gray-500 mb-4">
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-sm font-medium">{p.local || 'Destino a definir'}</span>
+                        </div>
+
+                        <p className="text-gray-600 line-clamp-2 mb-4">
+                          {p.resumo || p.descricao || 'Uma experiência única te espera neste destino incrível.'}
+                        </p>
+
+                        {/* Rating */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            ))}
+                          </div>
+                          <span className="text-sm text-gray-500">4.9 (238 avaliações)</span>
+                        </div>
+
+                        {/* Hover CTA */}
+                        <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="inline-flex items-center gap-2 text-purple-600 font-semibold">
+                            Ver detalhes
+                            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-2" />
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                </div>
-
-                <div className="flex h-full flex-col gap-3 p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{p.nome}</h3>
-                      <p className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-                        <MapPin size={16} /> {p.local || 'Destino a definir'}
-                      </p>
-                    </div>
-                    <div className="rounded-md bg-gray-900 px-2 py-1 text-xs font-semibold text-white flex items-center gap-1">
-                      <Clock size={14} />
-                      {p.dias ? `${p.dias}d` : 'Dias?'}
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-gray-600 line-clamp-3">
-                    {p.resumo || p.descricao || 'Descrição em breve.'}
-                  </p>
-
-                  <div className="mt-auto flex items-center justify-between text-sm">
-                    <span className="text-xl font-extrabold text-gray-900">{p.preco || 'Preço a consultar'}</span>
-                    <Link href={`/pacotes/${p.id}`} className="text-pink-700 hover:text-pink-800 font-semibold">
-                      Ver detalhes
-                    </Link>
-                  </div>
-                </div>
-              </motion.article>
-            );
-          })}
+                  </Link>
+                </motion.article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
-      {/* ===========================
-          CTA final
-         =========================== */}
-      <section className="bg-white/90 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-20 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl md:text-4xl font-extrabold"
-          >
-            Pronto para dar play na sua próxima viagem?
-          </motion.h2>
-
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="mt-3 text-gray-600 max-w-2xl mx-auto"
-          >
-            Do orçamento ao roteiro final, cuidamos de tudo com transparência e agilidade.
-            Você só precisa escolher o destino.
-          </motion.p>
-
+      {/* FINAL CTA - Modern Gradient Design */}
+      <section className="relative py-32 overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500" />
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            className="absolute inset-0 opacity-30"
+            animate={{
+              backgroundImage: [
+                'radial-gradient(circle at 20% 50%, white 0%, transparent 50%)',
+                'radial-gradient(circle at 80% 50%, white 0%, transparent 50%)',
+                'radial-gradient(circle at 20% 50%, white 0%, transparent 50%)',
+              ],
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="mt-8"
+            className="space-y-6"
           >
-            <Link
-              href="/pacotes"
-              className="inline-flex items-center gap-2 rounded-full px-8 py-3 text-white font-semibold
-                         bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600
-                         shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
-            >
-              Ver todos os pacotes <ArrowRight size={18} />
-            </Link>
+            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30">
+              <Users className="w-5 h-5 text-white" />
+              <span className="text-white font-semibold">Junte-se a mais de 15.000 viajantes</span>
+            </div>
+
+            <h2 className="text-5xl md:text-6xl font-black text-white">
+              Sua próxima aventura
+              <br />
+              <span className="bg-gradient-to-r from-yellow-200 to-yellow-400 bg-clip-text text-transparent">
+                começa aqui
+              </span>
+            </h2>
+
+            <p className="text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
+              Do orçamento ao check-in, cuidamos de cada detalhe. Você só precisa escolher o destino dos seus sonhos.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
+              <Link
+                href="/pacotes"
+                className="group relative inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-white text-gray-900 font-bold text-lg shadow-2xl transition-all hover:scale-105"
+              >
+                <span>Explorar pacotes</span>
+                <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-2" />
+              </Link>
+              
+              <a
+                href="#contato"
+                className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl border-2 border-white/50 bg-white/10 backdrop-blur-md text-white font-bold text-lg transition-all hover:bg-white/20 hover:border-white"
+              >
+                <span>Falar com consultor</span>
+              </a>
+            </div>
+
+            {/* Trust Badges */}
+            <div className="flex justify-center items-center gap-8 pt-12">
+              <div className="flex items-center gap-2 text-white/80">
+                <Shield className="w-5 h-5" />
+                <span className="text-sm font-medium">Pagamento seguro</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80">
+                <Star className="w-5 h-5" />
+                <span className="text-sm font-medium">Melhor preço garantido</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80">
+                <Users className="w-5 h-5" />
+                <span className="text-sm font-medium">Suporte 24/7</span>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
