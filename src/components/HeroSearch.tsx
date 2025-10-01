@@ -1,203 +1,155 @@
-'use client';
-
-import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, Phone, User, MapPin, SendHorizonal, Plane } from 'lucide-react';
-
-type SearchForm = {
-  origem: string;
-  destino: string;
-  ida: string;
-  volta: string;
-  nome: string;
-  telefone: string;
-};
-
-type TripType = 'round' | 'oneway';
+import { useState } from 'react';
+import { MapPin, Calendar, Users, Search, Plane } from 'lucide-react';
 
 export default function HeroSearch() {
-  const [tripType, setTripType] = useState<TripType>('round');
-  const [form, setForm] = useState<SearchForm>({
-    origem: '',
-    destino: '',
-    ida: '',
-    volta: '',
-    nome: '',
-    telefone: '',
-  });
+  const [origem, setOrigem] = useState('');
+  const [destino, setDestino] = useState('');
+  const [dataIda, setDataIda] = useState('');
+  const [dataVolta, setDataVolta] = useState('');
+  const [passageiros, setPassageiros] = useState(2);
 
-  const inputBase =
-    'w-full h-12 rounded-xl border border-white/30 bg-white/85 px-4 outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition text-sm backdrop-blur';
-
-  const onSubmit = (e: React.FormEvent) => {
+  const handleSearch = (e) => {
     e.preventDefault();
-    if (!form.origem || !form.destino || !form.ida || (tripType === 'round' && !form.volta)) {
-      alert('Preencha origem, destino e data(s) para pesquisar.');
-      return;
-    }
-    console.log({ tripType, ...form });
-    alert('Busca pronta para integrar ao backend.');
+    console.log({ origem, destino, dataIda, dataVolta, passageiros });
   };
 
-  const subtitle = useMemo(
-    () => (tripType === 'round' ? 'Compare ida e volta instantaneamente.' : 'Encontre a melhor tarifa só de ida.'),
-    [tripType]
-  );
-
   return (
-    <section className="relative">
-      <motion.form
-        onSubmit={onSubmit}
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6 }}
-        className="
-          relative isolate w-full max-w-2xl
-          rounded-3xl border border-white/20 bg-white/15 p-6 shadow-2xl backdrop-blur-xl ring-1 ring-white/20
-          /* margem pequena interna p/ não encostar no fade inferior do hero */
-          mt-2
-        "
-      >
-        {/* brilho sutil */}
-        <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-white/0" />
-
-        {/* Header */}
-        <div className="relative mb-4">
-          <div className="flex items-center gap-2 text-white/95">
-            <div className="rounded-lg bg-white/20 p-2 ring-1 ring-white/30">
-              <Plane size={18} />
-            </div>
-            <h3 className="text-lg font-bold drop-shadow">Busque suas passagens com a Evastur</h3>
+    <div className="w-full p-8">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-2xl font-black text-gray-900">Planeje sua viagem</h3>
+            <p className="text-sm text-gray-600 mt-1">Encontre as melhores ofertas para seu destino</p>
           </div>
-          <p className="mt-1 text-sm text-white/85">{subtitle}</p>
+          <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg">
+            <Plane className="w-6 h-6 text-white" />
+          </div>
         </div>
 
-        {/* Tipo de viagem */}
-        <div className="relative mb-4 flex gap-2">
-          <button
-            type="button"
-            onClick={() => setTripType('round')}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-              tripType === 'round' ? 'bg-white text-gray-900 shadow' : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            Ida e volta
-          </button>
-          <button
-            type="button"
-            onClick={() => setTripType('oneway')}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-              tripType === 'oneway' ? 'bg-white text-gray-900 shadow' : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            Só ida
-          </button>
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white/90">Origem</label>
+        <div className="grid gap-4">
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Origem
+            </label>
             <div className="relative">
-              <MapPin className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors">
+                <MapPin className="w-5 h-5" />
+              </div>
               <input
-                placeholder="Ex.: São Paulo (GRU)"
-                className={`${inputBase} pl-10`}
-                value={form.origem}
-                onChange={(e) => setForm({ ...form, origem: e.target.value })}
-                autoComplete="off"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white/90">Destino</label>
-            <div className="relative">
-              <MapPin className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
-              <input
-                placeholder="Ex.: Fortaleza (FOR)"
-                className={`${inputBase} pl-10`}
-                value={form.destino}
-                onChange={(e) => setForm({ ...form, destino: e.target.value })}
-                autoComplete="off"
+                type="text"
+                value={origem}
+                onChange={(e) => setOrigem(e.target.value)}
+                placeholder="De onde você sai?"
+                className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none font-medium"
               />
             </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white/90">Ida</label>
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Destino
+            </label>
             <div className="relative">
-              <Calendar className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-600 transition-colors">
+                <MapPin className="w-5 h-5" />
+              </div>
               <input
-                type="date"
-                className={`${inputBase} pl-10`}
-                value={form.ida}
-                onChange={(e) => setForm({ ...form, ida: e.target.value })}
+                type="text"
+                value={destino}
+                onChange={(e) => setDestino(e.target.value)}
+                placeholder="Para onde vai?"
+                className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10 transition-all outline-none font-medium"
               />
             </div>
           </div>
 
-          {tripType === 'round' && (
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-white/90">Volta</label>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Ida
+              </label>
               <div className="relative">
-                <Calendar className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                  <Calendar className="w-5 h-5" />
+                </div>
                 <input
                   type="date"
-                  className={`${inputBase} pl-10`}
-                  value={form.volta}
-                  onChange={(e) => setForm({ ...form, volta: e.target.value })}
+                  value={dataIda}
+                  onChange={(e) => setDataIda(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 bg-white text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium"
                 />
               </div>
             </div>
-          )}
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white/90">Nome</label>
-            <div className="relative">
-              <User className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
-              <input
-                placeholder="Como podemos te chamar?"
-                className={`${inputBase} pl-10`}
-                value={form.nome}
-                onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                autoComplete="name"
-              />
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Volta
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <input
+                  type="date"
+                  value={dataVolta}
+                  onChange={(e) => setDataVolta(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 bg-white text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium"
+                />
+              </div>
             </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-white/90">Telefone</label>
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Passageiros
+            </label>
             <div className="relative">
-              <Phone className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-700" />
-              <input
-                type="tel"
-                inputMode="tel"
-                placeholder="DDD + número"
-                className={`${inputBase} pl-10`}
-                value={form.telefone}
-                onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-                autoComplete="tel"
-              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-green-600 transition-colors">
+                <Users className="w-5 h-5" />
+              </div>
+              <select
+                value={passageiros}
+                onChange={(e) => setPassageiros(Number(e.target.value))}
+                className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 bg-white text-gray-900 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all outline-none font-medium appearance-none cursor-pointer"
+              >
+                <option value={1}>1 pessoa</option>
+                <option value={2}>2 pessoas</option>
+                <option value={3}>3 pessoas</option>
+                <option value={4}>4 pessoas</option>
+                <option value={5}>5+ pessoas</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
 
-        <motion.button
-          type="submit"
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.985 }}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-white text-lg font-semibold
-                     bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600
-                     shadow-md hover:shadow-lg transition-all duration-300"
+        <button
+          onClick={handleSearch}
+          className="group relative w-full py-5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white font-bold text-lg shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
         >
-          <SendHorizonal className="h-5 w-5 -rotate-12" />
-          Buscar passagens agora
-        </motion.button>
+          <span className="relative z-10 flex items-center justify-center gap-3">
+            <Search className="w-6 h-6" />
+            Buscar pacotes
+          </span>
+          
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        </button>
 
-        <p className="mt-2 text-[11px] text-white/85">
-          Sem taxas ocultas. Tarifas atualizadas com cias aéreas e parceiros.
-        </p>
-      </motion.form>
-    </section>
+        <div className="flex items-center justify-center gap-6 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span>Cancelamento grátis</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <span>Melhor preço garantido</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

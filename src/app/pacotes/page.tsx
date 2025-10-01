@@ -2,14 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-
-import PackageModal from '@/components/PackageModal';
-import AddPackageButton from '@/components/packages/AddPackageButton';
-import type { PackageDTO } from '@/types/package';
-import { usePackages } from '@/hooks/usePackages';
-import { useCanManagePackages } from '@/hooks/useCanManagePackages';
-
-// Ícones (sem emoji)
 import {
   Plane,
   Hotel,
@@ -21,19 +13,111 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  Star,
+  Calendar,
+  Users,
+  Ship,
 } from 'lucide-react';
 
-/** ===========================
- * HERO: imagens (cross-fade + parallax + leve Ken Burns)
- * =========================== */
+// Mock dos hooks - substitua pelos seus hooks reais
+const usePackages = () => {
+  const [packages, setPackages] = useState([
+    {
+      id: '1',
+      nome: 'Cancún Premium',
+      local: 'Cancún, México',
+      dias: 7,
+      preco: 'R$ 4.500',
+      resumo: 'Resort all-inclusive com praia paradisíaca e gastronomia internacional.',
+      dataIda: '2025-03-15',
+      dataVolta: '2025-03-22',
+      imagens: ['https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80']
+    },
+    {
+      id: '2',
+      nome: 'Paris Romântico',
+      local: 'Paris, França',
+      dias: 10,
+      preco: 'R$ 8.900',
+      resumo: 'Tour completo pela cidade luz com guia exclusivo e hospedagem boutique.',
+      dataIda: '2025-04-10',
+      dataVolta: '2025-04-20',
+      imagens: ['https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80']
+    },
+    {
+      id: '3',
+      nome: 'Caribe Incrível',
+      local: 'Punta Cana, República Dominicana',
+      dias: 8,
+      preco: 'R$ 5.200',
+      resumo: 'Resort de luxo com atividades aquáticas e entretenimento para toda família.',
+      dataIda: '2025-05-05',
+      dataVolta: '2025-05-13',
+      imagens: ['https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80']
+    }
+  ]);
+
+  return {
+    packages,
+    loading: false,
+    error: null,
+    removeLocal: (id) => setPackages(packages.filter(p => p.id !== id))
+  };
+};
+
+const useCanManagePackages = () => false;
+
+const PackageModal = ({ open, onClose, data }) => {
+  if (!open || !data) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative h-64">
+          <img src={data.imagens?.[0]} alt={data.nome} className="w-full h-full object-cover" />
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center hover:bg-white transition"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-8">
+          <h2 className="text-3xl font-black text-gray-900">{data.nome}</h2>
+          <p className="text-gray-600 mt-2">{data.local}</p>
+          <p className="text-gray-700 mt-4">{data.resumo}</p>
+          <div className="mt-6 flex gap-4">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Calendar className="w-5 h-5" />
+              <span>{data.dias} dias</span>
+            </div>
+            <div className="text-2xl font-black text-purple-600">{data.preco}</div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const AddPackageButton = () => (
+  <button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition">
+    + Novo Pacote
+  </button>
+);
+
 const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1920&q=80', // praia turquesa
-  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1920&q=80', // cidade noite
-  'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?auto=format&fit=crop&w=1920&q=80', // montanha neblina
-  'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1920&q=80', // cruzeiro/porto
+  'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1920&q=80',
 ];
 
-/** Headline rotativa — frases curtas e vendedoras */
 const HEADLINES = [
   'Pacotes inteligentes para viajar mais gastando menos.',
   'Voos, hotéis e experiências selecionadas a dedo.',
@@ -46,14 +130,13 @@ export default function PacotesPage() {
   const canManage = useCanManagePackages();
 
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState<PackageDTO | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [current, setCurrent] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  // Parallax do BG
   const { scrollYProgress } = useScroll();
-  const yHero = useTransform(scrollYProgress, [0, 0.3], [0, -40]);
+  const yHero = useTransform(scrollYProgress, [0, 0.4], [0, -100]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.3]);
 
-  // Índices de carrossel
   const [bgIndex, setBgIndex] = useState(0);
   const [headlineIndex, setHeadlineIndex] = useState(0);
 
@@ -61,43 +144,49 @@ export default function PacotesPage() {
     const id = setInterval(() => setBgIndex((i) => (i + 1) % HERO_IMAGES.length), 6000);
     return () => clearInterval(id);
   }, []);
+
   useEffect(() => {
     const id = setInterval(() => setHeadlineIndex((i) => (i + 1) % HEADLINES.length), 3500);
     return () => clearInterval(id);
   }, []);
 
-  // Destaques (cards com ícones) em carrossel simples
   const HIGHLIGHTS = useMemo(
     () => [
       {
         icon: Plane,
         title: 'Voos com melhor custo-benefício',
         text: 'Roteiros otimizados para economizar tempo e dinheiro sem abrir mão do conforto.',
+        color: 'from-blue-500 to-cyan-500',
       },
       {
         icon: Hotel,
         title: 'Hospedagens testadas',
         text: 'Selecionadas por localização, avaliação e estrutura real, não só por fotos.',
+        color: 'from-purple-500 to-pink-500',
       },
       {
         icon: MapPin,
         title: 'Experiências locais',
         text: 'Passeios autênticos para você viver o destino além do cartão-postal.',
+        color: 'from-green-500 to-teal-500',
       },
       {
         icon: ShieldCheck,
         title: 'Atendimento dedicado',
         text: 'Suporte antes, durante e depois — sem filas e sem robozice.',
+        color: 'from-orange-500 to-red-500',
       },
       {
         icon: BadgePercent,
         title: 'Ofertas relâmpago',
         text: 'Oportunidades reais com estoque limitado. Perdeu, só na próxima.',
+        color: 'from-indigo-500 to-purple-500',
       },
       {
         icon: Sparkles,
         title: 'Roteiros personalizáveis',
         text: 'Ajuste datas, passeios e hospedagens em minutos, sem dor de cabeça.',
+        color: 'from-pink-500 to-rose-500',
       },
     ],
     []
@@ -107,95 +196,98 @@ export default function PacotesPage() {
   const goPrev = () => setHlIndex((i) => (i - 1 + HIGHLIGHTS.length) % HIGHLIGHTS.length);
   const goNext = () => setHlIndex((i) => (i + 1) % HIGHLIGHTS.length);
 
-  const abrir = (pkg: PackageDTO) => {
+  const abrir = (pkg) => {
     setCurrent(pkg);
     setOpen(true);
   };
 
-  const excluir = async (pkg: PackageDTO) => {
+  const excluir = async (pkg) => {
     if (!canManage) return;
     if (!confirm(`Deseja realmente excluir o pacote "${pkg.nome}"?`)) return;
     setDeletingId(pkg.id);
     try {
       const res = await fetch(`/api/admin/packages/${pkg.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || 'Falha ao excluir pacote');
-      }
+      if (!res.ok) throw new Error('Falha ao excluir');
       removeLocal(pkg.id);
       if (current?.id === pkg.id) {
         setOpen(false);
         setCurrent(null);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao excluir pacote';
-      alert(message);
+      alert('Erro ao excluir pacote');
     } finally {
       setDeletingId(null);
     }
   };
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 pt-safe-header">
-      {/* ===========================
-          HERO — isolado, com fade inferior e altura segura no mobile
-         =========================== */}
-      <section
-        className="
-          relative isolate w-full overflow-hidden scroll-mt-[var(--header-h)]
-          min-h-[calc(80svh-var(--header-h))] md:min-h-[640px]
-          pt-6 sm:pt-8 md:pt-10
-          pb-24 sm:pb-16
-        "
-      >
-        {/* Camadas de fundo (cross-fade + parallax + ken burns leve) */}
-        <div className="absolute inset-0 z-0">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 text-gray-900">
+      {/* HERO SECTION */}
+      <section className="relative isolate w-full overflow-hidden min-h-[90vh] md:min-h-[700px]">
+        <motion.div style={{ opacity: heroOpacity }} className="absolute inset-0 z-0">
           <AnimatePresence initial={false} mode="sync">
             <motion.div
               key={bgIndex}
               style={{ y: yHero, backgroundImage: `url("${HERO_IMAGES[bgIndex]}")` }}
               className="absolute inset-0 bg-center bg-cover"
-              initial={{ opacity: 0, scale: 1.05 }}
+              initial={{ opacity: 0, scale: 1.1 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 1.2, ease: 'easeInOut' }}
+              transition={{ duration: 1.5, ease: 'easeInOut' }}
             />
           </AnimatePresence>
 
-          {/* Glow/grade animada sutil */}
           <motion.div
-            className="absolute inset-0 pointer-events-none"
-            initial={{ opacity: 0.35 }}
-            animate={{ opacity: [0.35, 0.5, 0.35] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            style={{
-              background:
-                'radial-gradient(1200px 600px at 20% 30%, rgba(255,255,255,0.25), transparent 60%), radial-gradient(900px 500px at 80% 60%, rgba(255,255,255,0.15), transparent 60%)',
+            className="absolute inset-0"
+            animate={{
+              background: [
+                'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)',
+                'linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)',
+                'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)',
+              ],
             }}
+            transition={{ duration: 10, repeat: Infinity }}
           />
-        </div>
+        </motion.div>
 
-        {/* Overlays (não bloqueiam clique) + fade só na borda inferior */}
-        <div className="absolute inset-0 pointer-events-none z-0 bg-black/35" />
-        <div className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none z-0 bg-gradient-to-b from-transparent to-white" />
+        <div className="absolute inset-0 z-0 backdrop-blur-[2px] bg-gradient-to-b from-transparent via-transparent to-white" />
 
-        {/* Conteúdo do hero */}
-        <div className="relative z-10 flex h-full items-center">
-          <div className="max-w-6xl mx-auto px-6 w-full">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative z-10 flex h-full items-center pt-20">
+          <div className="max-w-7xl mx-auto px-6 w-full py-20">
+            <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
               <div className="max-w-3xl">
-                {/* Título fixo (mais padding top vem do pt-safe-header) */}
-                <motion.h1
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.7 }}
-                  className="text-4xl md:text-6xl font-black tracking-tight text-white drop-shadow"
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8, type: "spring" }}
+                  className="mb-8"
                 >
-                  Viaje melhor com pacotes pensados para pessoas reais.
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20">
+                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                    <span className="text-white text-sm font-medium">Pacotes exclusivos</span>
+                  </div>
+                </motion.div>
+
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.1 }}
+                  className="text-5xl md:text-7xl font-black tracking-tight text-white leading-[1.1]"
+                >
+                  <span className="bg-gradient-to-r from-white via-white to-gray-200 bg-clip-text text-transparent">
+                    Viaje melhor
+                  </span>
+                  <br />
+                  <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
+                    com pacotes pensados
+                  </span>
+                  <br />
+                  <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
+                    para pessoas reais
+                  </span>
                 </motion.h1>
 
-                {/* Headline rotativa */}
-                <div className="h-14 mt-3 relative">
+                <div className="h-14 mt-6 relative">
                   <AnimatePresence mode="wait">
                     <motion.p
                       key={headlineIndex}
@@ -210,33 +302,33 @@ export default function PacotesPage() {
                   </AnimatePresence>
                 </div>
 
-                {/* CTA dupla */}
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <motion.a
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.8 }}
+                  className="mt-8 flex flex-wrap items-center gap-4"
+                >
+                  <a
                     href="#pacotes"
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-gray-900 shadow hover:shadow-lg transition"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="group relative inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-white text-gray-900 font-semibold overflow-hidden transition-all hover:scale-105"
                   >
-                    Ver pacotes disponíveis <ArrowRight size={18} />
-                  </motion.a>
-                  <motion.a
+                    <span className="relative z-10">Ver pacotes</span>
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-400 opacity-0 group-hover:opacity-10 transition-opacity" />
+                  </a>
+                  <a
                     href="#como-funciona"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/10 px-5 py-3 font-semibold text-white backdrop-blur hover:bg-white/20 transition"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-white/30 bg-white/5 text-white font-semibold backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/50"
                   >
                     Como funciona
-                  </motion.a>
-                </div>
+                  </a>
+                </motion.div>
               </div>
 
-              {/* Ação administrativa */}
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.5 }}
-                className="flex flex-col items-start gap-2 self-start sm:self-end"
+                transition={{ delay: 0.2, duration: 0.5 }}
               >
                 <AddPackageButton />
               </motion.div>
@@ -244,196 +336,225 @@ export default function PacotesPage() {
           </div>
         </div>
 
-        {/* Indicadores do background */}
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 flex gap-3">
           {HERO_IMAGES.map((_, i) => (
-            <div
+            <motion.div
               key={i}
-              className={`h-1.5 rounded-full transition-all ${i === bgIndex ? 'w-8 bg-white' : 'w-3 bg-white/60'}`}
+              className={`h-2 rounded-full transition-all cursor-pointer ${
+                i === bgIndex ? 'w-12 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
+              }`}
+              whileHover={{ scale: 1.2 }}
+              onClick={() => setBgIndex(i)}
             />
           ))}
         </div>
       </section>
 
-      {/* ===========================
-          Carrossel de destaques
-         =========================== */}
-      <section id="como-funciona" className="relative scroll-mt-[var(--header-h)]">
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-b from-white to-white/0"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.8 }}
-        />
-        <div className="max-w-6xl mx-auto px-6 py-12 relative">
-          <div className="flex items-center justify-between">
-            <motion.h2
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
-              transition={{ duration: 0.6 }}
-              className="text-2xl md:text-3xl font-bold tracking-tight"
+      {/* BENEFITS CAROUSEL */}
+      <section id="como-funciona" className="py-24 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-between mb-12">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
             >
-              Por que nossos pacotes valem a pena
-            </motion.h2>
+              <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Por que nossos pacotes valem a pena
+              </h2>
+            </motion.div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={goPrev}
-                className="rounded-full border border-gray-200 bg-white p-2 shadow-sm hover:shadow transition"
-                aria-label="Anterior"
+                className="rounded-full border border-gray-200 bg-white p-3 shadow-lg hover:shadow-xl transition hover:scale-105"
               >
-                <ChevronLeft size={18} />
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={goNext}
-                className="rounded-full border border-gray-200 bg-white p-2 shadow-sm hover:shadow transition"
-                aria-label="Próximo"
+                className="rounded-full border border-gray-200 bg-white p-3 shadow-lg hover:shadow-xl transition hover:scale-105"
               >
-                <ChevronRight size={18} />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <div className="relative mt-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={hlIndex}
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -24 }}
-                transition={{ duration: 0.4 }}
-                className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {Array.from({ length: 3 }).map((_, k) => {
-                  const item = HIGHLIGHTS[(hlIndex + k) % HIGHLIGHTS.length];
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={`${item.title}-${k}`}
-                      initial={{ opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: '-60px' }}
-                      transition={{ duration: 0.45 }}
-                      className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition"
-                    >
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50" />
-                      <div className="relative z-10">
-                        <div className="flex items-center gap-3">
-                          <div className="rounded-xl bg-gray-900 text-white p-2 shadow-sm">
-                            <Icon size={20} />
-                          </div>
-                          <h3 className="text-lg font-semibold">{item.title}</h3>
-                        </div>
-                        <p className="mt-3 text-gray-600">{item.text}</p>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={hlIndex}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.4 }}
+              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {Array.from({ length: 3 }).map((_, k) => {
+                const item = HIGHLIGHTS[(hlIndex + k) % HIGHLIGHTS.length];
+                const Icon = item.icon;
+                return (
+                  <motion.div
+                    key={`${item.title}-${k}`}
+                    whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                    className="group relative"
+                  >
+                    <div className="relative h-full p-8 rounded-3xl bg-white border border-gray-200 shadow-lg overflow-hidden transition-all hover:shadow-2xl">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
+                      
+                      <div className={`relative inline-flex p-3 rounded-2xl bg-gradient-to-br ${item.color} shadow-lg mb-4`}>
+                        <Icon className="w-6 h-6 text-white" />
                       </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            </AnimatePresence>
+                      
+                      <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
+                      <p className="text-gray-600 leading-relaxed">{item.text}</p>
+                      
+                      <div className={`absolute -bottom-2 -right-2 w-24 h-24 bg-gradient-to-br ${item.color} opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform`} />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </section>
+
+      {/* PACKAGES GRID */}
+      <section id="pacotes" className="py-24 bg-gradient-to-b from-gray-50 to-white scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              Destinos disponíveis
+            </h2>
+            <p className="mt-4 text-xl text-gray-600">Escolha seu próximo destino e comece a sonhar</p>
+          </motion.div>
+
+          {loading && (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent" />
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="text-center py-12 text-red-500 bg-red-50 rounded-2xl">
+              <p>{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && pacotes.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <Ship className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p>Nenhum pacote disponível no momento.</p>
+            </div>
+          )}
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {pacotes.map((p, i) => {
+              const capa = p.imagens?.[0];
+              return (
+                <motion.article
+                  key={p.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="group relative cursor-pointer"
+                  onClick={() => abrir(p)}
+                >
+                  <div className="relative h-full bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                    <div className="relative h-56 overflow-hidden">
+                      {capa ? (
+                        <img 
+                          src={capa} 
+                          alt={p.nome} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                          <MapPin className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
+                      
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      
+                      <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-white/95 backdrop-blur-md shadow-lg">
+                        <p className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                          {p.preco || 'Consulte'}
+                        </p>
+                      </div>
+
+                      <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-white text-sm font-semibold flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
+                        {p.dias ? `${p.dias} dias` : 'A definir'}
+                      </div>
+
+                      {canManage && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            excluir(p);
+                          }}
+                          className="absolute bottom-4 right-4 px-4 py-2 rounded-full bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition"
+                          disabled={deletingId === p.id}
+                        >
+                          {deletingId === p.id ? 'Removendo…' : 'Excluir'}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="p-6">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 line-clamp-1">
+                        {p.nome}
+                      </h3>
+                      
+                      <div className="flex items-center gap-2 text-gray-500 mb-4">
+                        <MapPin className="w-4 h-4" />
+                        <span className="text-sm font-medium">{p.local || 'Destino a definir'}</span>
+                      </div>
+
+                      <p className="text-gray-600 line-clamp-2 mb-4">
+                        {p.resumo || p.descricao || 'Uma experiência única te espera neste destino incrível.'}
+                      </p>
+
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-500">4.9 (238 avaliações)</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{p.dataIda ? new Date(p.dataIda).toLocaleDateString() : 'A definir'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          <span>2-4 pessoas</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="inline-flex items-center gap-2 text-purple-600 font-semibold">
+                          Ver detalhes
+                          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-2" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.article>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ===========================
-          Grade de pacotes
-         =========================== */}
-      <section id="pacotes" className="max-w-6xl mx-auto px-6 pb-16 scroll-mt-[var(--header-h)]">
-        {loading && <p className="text-center text-gray-500">Carregando pacotes…</p>}
-        {!loading && error && <p className="text-center text-red-500">{error}</p>}
-        {!loading && !error && pacotes.length === 0 && (
-          <p className="text-center text-gray-500">Nenhum pacote cadastrado até o momento.</p>
-        )}
-
-        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {pacotes.map((p, i) => {
-            const capa = p.imagens?.[0];
-            return (
-              <motion.article
-                key={p.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => abrir(p)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    abrir(p);
-                  }
-                }}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ delay: i * 0.04, duration: 0.45 }}
-                whileHover={{ y: -6 }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-300"
-              >
-                <div className="relative h-44 w-full overflow-hidden bg-gray-200">
-                  {capa ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={capa}
-                      alt={p.nome}
-                      className="h-full w-full object-cover transition group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                      Imagem indisponível
-                    </div>
-                  )}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                  {canManage && (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        (async () => { await excluir(p); })();
-                      }}
-                      className="absolute right-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-black/80"
-                      disabled={deletingId === p.id}
-                    >
-                      {deletingId === p.id ? 'Removendo…' : 'Excluir'}
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex h-full flex-col gap-3 p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{p.nome}</h3>
-                      <p className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-                        <MapPin size={16} /> {p.local || 'Destino a definir'}
-                      </p>
-                    </div>
-                    <div className="rounded-md bg-gray-900 px-2 py-1 text-xs font-semibold text-white flex items-center gap-1">
-                      <Clock size={14} />
-                      {p.dias ? `${p.dias}d` : 'Dias?'}
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-gray-600 line-clamp-3">
-                    {p.resumo || p.descricao || 'Descrição em breve.'}
-                  </p>
-
-                  <div className="mt-auto flex items-center justify-between text-sm">
-                    <span className="text-xl font-extrabold text-gray-900">{p.preco || 'Preço a consultar'}</span>
-                    <div className="text-right text-xs text-gray-500">
-                      <p>
-                        {p.dataIda ? new Date(p.dataIda).toLocaleDateString() : 'Ida a definir'} •{' '}
-                        {p.dataVolta ? new Date(p.dataVolta).toLocaleDateString() : 'Volta a definir'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.article>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Modal */}
       <PackageModal open={open} onClose={() => setOpen(false)} data={current} />
     </main>
   );
