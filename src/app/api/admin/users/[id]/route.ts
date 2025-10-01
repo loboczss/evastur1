@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 async function getSessionUser() {
   const cookieStore = await cookies();
@@ -20,10 +20,11 @@ async function getSessionUser() {
 }
 
 /** GET /api/admin/users/[id] */
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(_req: Request, context: Ctx) {
   try {
+    const { id } = await context.params;
     const user = await prisma.user.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: { roles: { include: { role: true } } },
     });
     if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
@@ -44,7 +45,7 @@ type UpdatePayload = {
   password?: string;
 };
 
-export async function PUT(req: Request, { params }: Ctx) {
+export async function PUT(req: Request, context: Ctx) {
   try {
     const actor = await getSessionUser();
     if (!actor) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
@@ -52,6 +53,7 @@ export async function PUT(req: Request, { params }: Ctx) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
+    const { id } = await context.params;
     const body = (await req.json()) as UpdatePayload | null;
     const { name, email, phone, isActive, roleIds, password } = body ?? {};
     const data: Prisma.UserUpdateInput = {};
@@ -80,7 +82,7 @@ export async function PUT(req: Request, { params }: Ctx) {
       : undefined;
 
     const updated = await prisma.user.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         ...data,
         roles:
@@ -102,7 +104,7 @@ export async function PUT(req: Request, { params }: Ctx) {
 }
 
 /** DELETE /api/admin/users/[id] */
-export async function DELETE(_req: Request, { params }: Ctx) {
+export async function DELETE(_req: Request, context: Ctx) {
   try {
     const actor = await getSessionUser();
     if (!actor) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
@@ -110,7 +112,8 @@ export async function DELETE(_req: Request, { params }: Ctx) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    await prisma.user.delete({ where: { id: Number(params.id) } });
+    const { id } = await context.params;
+    await prisma.user.delete({ where: { id: Number(id) } });
     return NextResponse.json({ message: 'Usuário deletado com sucesso' }, { status: 200 });
   } catch (e) {
     console.error('DELETE /users/[id]', e);

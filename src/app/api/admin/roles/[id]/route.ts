@@ -9,11 +9,12 @@ const prisma = new PrismaClient();
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const role = await prisma.role.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: { permissions: { include: { permission: true } } },
     });
 
@@ -35,14 +36,15 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const body = await request.json();
     const { name, description, permissionIds } = body;
 
     const updatedRole = await prisma.role.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         name,
         description,
@@ -71,11 +73,12 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     await prisma.role.delete({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     return NextResponse.json({ message: 'Papel deletado com sucesso' }, { status: 200 });

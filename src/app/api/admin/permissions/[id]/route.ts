@@ -3,14 +3,15 @@ import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 /**
  * GET /api/admin/permissions/[id]
  */
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(_req: Request, context: Ctx) {
   try {
-    const id = Number(params.id);
+    const { id: rawId } = await context.params;
+    const id = Number(rawId);
     const perm = await prisma.permission.findUnique({ where: { id } });
     if (!perm) return NextResponse.json({ error: 'Permissão não encontrada' }, { status: 404 });
     return NextResponse.json(perm, { status: 200 });
@@ -24,9 +25,10 @@ export async function GET(_req: Request, { params }: Ctx) {
  * PUT /api/admin/permissions/[id]
  * Body: { key?: string; description?: string }
  */
-export async function PUT(request: Request, { params }: Ctx) {
+export async function PUT(request: Request, context: Ctx) {
   try {
-    const id = Number(params.id);
+    const { id: rawId } = await context.params;
+    const id = Number(rawId);
     const body = (await request.json()) as Partial<{ key: string; description?: string | null }> | null;
     const { key, description } = body ?? {};
     const sanitizedKey = typeof key === 'string' ? key.trim() : undefined;
@@ -55,9 +57,10 @@ export async function PUT(request: Request, { params }: Ctx) {
  * DELETE /api/admin/permissions/[id]
  * Remove vínculos (RolePermission) e depois a permissão
  */
-export async function DELETE(_req: Request, { params }: Ctx) {
+export async function DELETE(_req: Request, context: Ctx) {
   try {
-    const id = Number(params.id);
+    const { id: rawId } = await context.params;
+    const id = Number(rawId);
 
     // Limpa vínculos com papéis antes (SQLite-friendly)
     await prisma.rolePermission.deleteMany({ where: { permissionId: id } });

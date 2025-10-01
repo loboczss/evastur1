@@ -4,13 +4,17 @@ import { getSessionUser, hasAdminRights } from '@/lib/auth';
 import { unlink } from 'fs/promises';
 import path from 'path';
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  _: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await context.params;
     const actor = await getSessionUser();
     if (!actor) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     if (!hasAdminRights(actor.roles)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
-    const packageId = Number(params.id);
+    const packageId = Number(id);
     if (!Number.isInteger(packageId)) {
       return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
     }
