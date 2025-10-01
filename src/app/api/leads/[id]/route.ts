@@ -3,7 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-type Ctx = { params: Promise<{ id: string }> };
+type Ctx = { params: { id: string } };
 
 type LeadUpdatePayload = Partial<{
   name: string;
@@ -23,7 +23,7 @@ const toNullableString = (value: unknown) => {
 };
 
 export async function GET(_req: Request, context: Ctx) {
-  const { id: rawId } = await context.params;
+  const { id: rawId } = context.params;
   const id = Number(rawId);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'id inválido' }, { status: 400 });
@@ -34,7 +34,7 @@ export async function GET(_req: Request, context: Ctx) {
 }
 
 export async function PUT(req: Request, context: Ctx) {
-  const { id: rawId } = await context.params;
+  const { id: rawId } = context.params;
   const id = Number(rawId);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'id inválido' }, { status: 400 });
@@ -61,7 +61,7 @@ export async function PUT(req: Request, context: Ctx) {
 }
 
 export async function DELETE(_req: Request, context: Ctx) {
-  const { id: rawId } = await context.params;
+  const { id: rawId } = context.params;
   const id = Number(rawId);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'id inválido' }, { status: 400 });

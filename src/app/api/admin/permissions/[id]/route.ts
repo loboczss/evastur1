@@ -3,14 +3,14 @@ import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-type Ctx = { params: Promise<{ id: string }> };
+type Ctx = { params: { id: string } };
 
 /**
  * GET /api/admin/permissions/[id]
  */
 export async function GET(_req: Request, context: Ctx) {
   try {
-    const { id: rawId } = await context.params;
+    const { id: rawId } = context.params;
     const id = Number(rawId);
     const perm = await prisma.permission.findUnique({ where: { id } });
     if (!perm) return NextResponse.json({ error: 'Permissão não encontrada' }, { status: 404 });
@@ -27,7 +27,7 @@ export async function GET(_req: Request, context: Ctx) {
  */
 export async function PUT(request: Request, context: Ctx) {
   try {
-    const { id: rawId } = await context.params;
+    const { id: rawId } = context.params;
     const id = Number(rawId);
     const body = (await request.json()) as Partial<{ key: string; description?: string | null }> | null;
     const { key, description } = body ?? {};
@@ -59,7 +59,7 @@ export async function PUT(request: Request, context: Ctx) {
  */
 export async function DELETE(_req: Request, context: Ctx) {
   try {
-    const { id: rawId } = await context.params;
+    const { id: rawId } = context.params;
     const id = Number(rawId);
 
     // Limpa vínculos com papéis antes (SQLite-friendly)
