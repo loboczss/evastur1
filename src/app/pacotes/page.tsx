@@ -1,5 +1,6 @@
 'use client';
 
+import type { FC, MouseEvent as ReactMouseEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
@@ -18,11 +19,32 @@ import {
   Calendar,
   Users,
   Ship,
+  type LucideIcon,
 } from 'lucide-react';
 
+type TravelPackage = {
+  id: string;
+  nome: string;
+  local: string;
+  dias: number;
+  preco: string;
+  resumo: string;
+  dataIda: string;
+  dataVolta: string;
+  imagens: string[];
+  descricao?: string;
+};
+
+type UsePackagesResult = {
+  packages: TravelPackage[];
+  loading: boolean;
+  error: null;
+  removeLocal: (id: TravelPackage['id']) => void;
+};
+
 // Mock dos hooks - substitua pelos seus hooks reais
-const usePackages = () => {
-  const [packages, setPackages] = useState([
+const usePackages = (): UsePackagesResult => {
+  const [packages, setPackages] = useState<TravelPackage[]>([
     {
       id: '1',
       nome: 'Cancún Premium',
@@ -58,19 +80,29 @@ const usePackages = () => {
     }
   ]);
 
+  const removeLocal = (id: TravelPackage['id']) => {
+    setPackages((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return {
     packages,
     loading: false,
     error: null,
-    removeLocal: (id) => setPackages(packages.filter(p => p.id !== id))
+    removeLocal,
   };
 };
 
-const useCanManagePackages = () => false;
+const useCanManagePackages = (): boolean => false;
 
-const PackageModal = ({ open, onClose, data }) => {
+type PackageModalProps = {
+  open: boolean;
+  onClose: () => void;
+  data: TravelPackage | null;
+};
+
+const PackageModal: FC<PackageModalProps> = ({ open, onClose, data }) => {
   if (!open || !data) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <motion.div
@@ -78,7 +110,7 @@ const PackageModal = ({ open, onClose, data }) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e: ReactMouseEvent<HTMLDivElement>) => e.stopPropagation()}
       >
         <div className="relative h-64">
           {data.imagens?.[0] ? (
@@ -119,7 +151,7 @@ const PackageModal = ({ open, onClose, data }) => {
   );
 };
 
-const AddPackageButton = () => (
+const AddPackageButton: FC = () => (
   <button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition">
     + Novo Pacote
   </button>
@@ -143,16 +175,16 @@ export default function PacotesPage() {
   const { packages: pacotes, loading, error, removeLocal } = usePackages();
   const canManage = useCanManagePackages();
 
-  const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
+  const [open, setOpen] = useState<boolean>(false);
+  const [current, setCurrent] = useState<TravelPackage | null>(null);
+  const [deletingId, setDeletingId] = useState<TravelPackage['id'] | null>(null);
 
   const { scrollYProgress } = useScroll();
   const yHero = useTransform(scrollYProgress, [0, 0.4], [0, -100]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.3]);
 
-  const [bgIndex, setBgIndex] = useState(0);
-  const [headlineIndex, setHeadlineIndex] = useState(0);
+  const [bgIndex, setBgIndex] = useState<number>(0);
+  const [headlineIndex, setHeadlineIndex] = useState<number>(0);
 
   useEffect(() => {
     const id = setInterval(() => setBgIndex((i) => (i + 1) % HERO_IMAGES.length), 6000);
@@ -164,7 +196,14 @@ export default function PacotesPage() {
     return () => clearInterval(id);
   }, []);
 
-  const HIGHLIGHTS = useMemo(
+  type Highlight = {
+    icon: LucideIcon;
+    title: string;
+    text: string;
+    color: string;
+  };
+
+  const HIGHLIGHTS = useMemo<Highlight[]>(
     () => [
       {
         icon: Plane,
@@ -206,16 +245,16 @@ export default function PacotesPage() {
     []
   );
 
-  const [hlIndex, setHlIndex] = useState(0);
+  const [hlIndex, setHlIndex] = useState<number>(0);
   const goPrev = () => setHlIndex((i) => (i - 1 + HIGHLIGHTS.length) % HIGHLIGHTS.length);
   const goNext = () => setHlIndex((i) => (i + 1) % HIGHLIGHTS.length);
 
-  const abrir = (pkg) => {
+  const abrir = (pkg: TravelPackage) => {
     setCurrent(pkg);
     setOpen(true);
   };
 
-  const excluir = async (pkg) => {
+  const excluir = async (pkg: TravelPackage) => {
     if (!canManage) return;
     if (!confirm(`Deseja realmente excluir o pacote "${pkg.nome}"?`)) return;
     setDeletingId(pkg.id);
@@ -404,7 +443,7 @@ export default function PacotesPage() {
               transition={{ duration: 0.4 }}
               className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {Array.from({ length: 3 }).map((_, k) => {
+              {Array.from({ length: 3 }, (_, index) => index).map((k) => {
                 const item = HIGHLIGHTS[(hlIndex + k) % HIGHLIGHTS.length];
                 const Icon = item.icon;
                 return (
@@ -481,23 +520,23 @@ export default function PacotesPage() {
                   onClick={() => abrir(p)}
                 >
                   <div className="relative h-full bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
-                      <div className="relative h-56 overflow-hidden">
-                        {capa ? (
-                          <Image
-                            src={capa}
-                            alt={p.nome}
-                            fill
-                            className="object-cover transition-transform duration-700 group-hover:scale-110"
-                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                          />
-                        ) : (
+                    <div className="relative h-56 overflow-hidden">
+                      {capa ? (
+                        <Image
+                          src={capa}
+                          alt={p.nome}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        />
+                      ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                           <MapPin className="w-12 h-12 text-gray-400" />
                         </div>
                       )}
-                      
+
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      
+
                       <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-white/95 backdrop-blur-md shadow-lg">
                         <p className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                           {p.preco || 'Consulte'}
@@ -511,7 +550,7 @@ export default function PacotesPage() {
 
                       {canManage && (
                         <button
-                          onClick={(e) => {
+                          onClick={(e: ReactMouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             excluir(p);
                           }}
@@ -539,8 +578,8 @@ export default function PacotesPage() {
 
                       <div className="flex items-center gap-4 mb-4">
                         <div className="flex gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          {Array.from({ length: 5 }, (_, index) => index).map((starIndex) => (
+                            <Star key={starIndex} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                           ))}
                         </div>
                         <span className="text-sm text-gray-500">4.9 (238 avaliações)</span>
