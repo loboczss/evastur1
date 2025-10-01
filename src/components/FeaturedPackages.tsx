@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import PackageModal from './PackageModal';
 import type { PackageDTO } from '@/types/package';
 import { usePackages } from '@/hooks/usePackages';
+import EditableText from './EditableText';
 
 export default function FeaturedPackages() {
   const { packages, loading, error } = usePackages();
@@ -22,10 +23,18 @@ export default function FeaturedPackages() {
     <>
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-            [Título dos principais pacotes (DB)]
-          </h2>
-          <p className="mt-2 text-gray-600">[Descrição curta (DB)]</p>
+          <EditableText
+            as="h2"
+            id="home.packages.title"
+            defaultContent="[Título dos principais pacotes (DB)]"
+            className="text-3xl md:text-4xl font-extrabold text-gray-900"
+          />
+          <EditableText
+            as="p"
+            id="home.packages.subtitle"
+            defaultContent="[Descrição curta (DB)]"
+            className="mt-2 text-gray-600"
+          />
         </div>
 
         {loading && (

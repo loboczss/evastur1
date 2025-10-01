@@ -8,6 +8,7 @@ import {
   MapPinIcon,
   PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
+import EditableText from '@/components/EditableText';
 
 type SearchForm = {
   origem: string;
@@ -44,12 +45,18 @@ export default function HeroSearch() {
       <div className="relative max-w-6xl mx-auto px-6 pt-28 pb-16">
         {/* Título + subtítulo */}
         <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-4">
-            [Título principal do banco]
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            [Descrição principal curta do banco]
-          </p>
+          <EditableText
+            as="h1"
+            id="home.hero.title"
+            defaultContent="[Título principal do banco]"
+            className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-4"
+          />
+          <EditableText
+            as="p"
+            id="home.hero.subtitle"
+            defaultContent="[Descrição principal curta do banco]"
+            className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto"
+          />
         </div>
 
         {/* GRID: mobile 1 col, tablet 2 cols, desktop 6 cols */}
@@ -157,7 +164,12 @@ export default function HeroSearch() {
                          shadow-md hover:shadow-lg transition-all duration-500 hover:scale-[1.01] animate-gradient-x"
             >
               <PaperAirplaneIcon className="h-5 w-5 -rotate-45 transition-transform group-hover:-translate-y-0.5" />
-              [Texto botão do banco]
+              <EditableText
+                as="span"
+                id="home.hero.button"
+                defaultContent="[Texto botão do banco]"
+                className="inline"
+              />
             </button>
           </div>
         </form>

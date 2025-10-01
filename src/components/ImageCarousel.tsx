@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import EditableText from '@/components/EditableText';
 
 type Slide = {
   id: string;
-  // Substituir por src, alt vindos do banco
-  placeholderLabel: string;
+  defaultContent: string;
 };
 
 const AUTOPLAY_MS = 3500;
@@ -14,9 +14,9 @@ const AUTOPLAY_MS = 3500;
 export default function ImageCarousel() {
   const [index, setIndex] = useState(0);
   const slides: Slide[] = [
-    { id: '1', placeholderLabel: '[Banner 1 do Banco]' },
-    { id: '2', placeholderLabel: '[Banner 2 do Banco]' },
-    { id: '3', placeholderLabel: '[Banner 3 do Banco]' },
+    { id: 'home.carousel.banner1', defaultContent: '[Banner 1 do Banco]' },
+    { id: 'home.carousel.banner2', defaultContent: '[Banner 2 do Banco]' },
+    { id: 'home.carousel.banner3', defaultContent: '[Banner 3 do Banco]' },
   ];
 
   const timer = useRef<number | null>(null);
@@ -42,7 +42,12 @@ export default function ImageCarousel() {
             transition={{ type: 'spring', stiffness: 90, damping: 18 }}
           >
             {/* Trocar por <Image src=... /> vindo do banco */}
-            {s.placeholderLabel}
+            <EditableText
+              as="span"
+              id={s.id}
+              defaultContent={s.defaultContent}
+              className="px-4 text-center"
+            />
           </motion.div>
         ))}
 

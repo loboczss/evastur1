@@ -114,3 +114,14 @@ model PackageImage {
   package   Package @relation(fields: [packageId], references: [id])
   packageId Int
 }
+
+model EditableContent {
+  id        Int      @id @default(autoincrement())
+  path      String
+  key       String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([path, key])
+}
