@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   Plane,
@@ -80,7 +81,20 @@ const PackageModal = ({ open, onClose, data }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative h-64">
-          <img src={data.imagens?.[0]} alt={data.nome} className="w-full h-full object-cover" />
+          {data.imagens?.[0] ? (
+            <Image
+              src={data.imagens[0]}
+              alt={data.nome}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 640px"
+              priority
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500">
+              Sem imagem disponível
+            </div>
+          )}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center hover:bg-white transition"
@@ -214,6 +228,7 @@ export default function PacotesPage() {
         setCurrent(null);
       }
     } catch (err) {
+      console.error(err);
       alert('Erro ao excluir pacote');
     } finally {
       setDeletingId(null);
@@ -466,14 +481,16 @@ export default function PacotesPage() {
                   onClick={() => abrir(p)}
                 >
                   <div className="relative h-full bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
-                    <div className="relative h-56 overflow-hidden">
-                      {capa ? (
-                        <img 
-                          src={capa} 
-                          alt={p.nome} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                        />
-                      ) : (
+                      <div className="relative h-56 overflow-hidden">
+                        {capa ? (
+                          <Image
+                            src={capa}
+                            alt={p.nome}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          />
+                        ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                           <MapPin className="w-12 h-12 text-gray-400" />
                         </div>

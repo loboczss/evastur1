@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -317,10 +318,12 @@ export default function HomePage() {
                       {/* Image Container */}
                       <div className="relative h-56 overflow-hidden">
                         {capa ? (
-                          <img 
-                            src={capa} 
-                            alt={p.nome} 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                          <Image
+                            src={capa}
+                            alt={p.nome}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">

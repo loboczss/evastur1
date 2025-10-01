@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import EditableText from '@/components/EditableText';
@@ -11,17 +11,18 @@ type Slide = {
 };
 
 const AUTOPLAY_MS = 5000;
+const SLIDES: Slide[] = [
+  { id: 'home.carousel.banner1', defaultContent: '[Banner 1 do Banco]' },
+  { id: 'home.carousel.banner2', defaultContent: '[Banner 2 do Banco]' },
+  { id: 'home.carousel.banner3', defaultContent: '[Banner 3 do Banco]' },
+];
 
 export default function ImageCarousel() {
   const [index, setIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [direction, setDirection] = useState(0);
-  
-  const slides: Slide[] = [
-    { id: 'home.carousel.banner1', defaultContent: '[Banner 1 do Banco]' },
-    { id: 'home.carousel.banner2', defaultContent: '[Banner 2 do Banco]' },
-    { id: 'home.carousel.banner3', defaultContent: '[Banner 3 do Banco]' },
-  ];
+
+  const slides = SLIDES;
 
   const timer = useRef<number | null>(null);
 
@@ -30,15 +31,15 @@ export default function ImageCarousel() {
     setIndex(newIndex);
   };
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     setDirection(1);
-    setIndex((i) => (i + 1) % slides.length);
-  };
+    setIndex((i) => (i + 1) % SLIDES.length);
+  }, []);
 
-  const goPrev = () => {
+  const goPrev = useCallback(() => {
     setDirection(-1);
-    setIndex((i) => (i - 1 + slides.length) % slides.length);
-  };
+    setIndex((i) => (i - 1 + SLIDES.length) % SLIDES.length);
+  }, []);
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -49,9 +50,12 @@ export default function ImageCarousel() {
       timer.current = window.setInterval(goNext, AUTOPLAY_MS);
     }
     return () => {
-      if (timer.current) window.clearInterval(timer.current);
+      if (timer.current) {
+        window.clearInterval(timer.current);
+        timer.current = null;
+      }
     };
-  }, [isPlaying, index, slides.length]);
+  }, [goNext, isPlaying]);
 
   const slideVariants = {
     enter: (direction: number) => ({
