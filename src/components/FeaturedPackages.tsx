@@ -133,7 +133,6 @@ function PackageCard({
   onOpen: (pkg: PackageVM) => void;
 }) {
   const imgs = (item.imagens ?? []).filter(Boolean);
-  const price = formatPrice(item.preco);
 
   // Hooks aqui (fora de loop/callback): OK ✅
   const mvX = useMotionValue(0);

@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import {
   X,
-  Image,
+  Image as ImageIcon,
   MapPin,
   Calendar,
   DollarSign,
@@ -229,7 +230,7 @@ export default function AddPackageModal({ open, onClose }: { open: boolean; onCl
                         <label className="block">
                           <div className="flex items-center gap-2 mb-3">
                             <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-100">
-                              <Image className="w-4 h-4 text-blue-600" />
+                              <ImageIcon className="w-4 h-4 text-blue-600" />
                             </div>
                             <span className="font-bold text-gray-900">Imagens</span>
                             <span className="text-sm text-gray-500">(até 5 fotos)</span>
@@ -263,7 +264,14 @@ export default function AddPackageModal({ open, onClose }: { open: boolean; onCl
                                   key={i}
                                   className="relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-200 shadow-md hover:shadow-xl transition-all hover:scale-105"
                                 >
-                                  <img src={src} alt={`preview-${i}`} className="w-full h-full object-cover" />
+                                  <Image
+                                    src={src}
+                                    alt={`Pré-visualização ${i + 1}`}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 1024px) 20vw, 160px"
+                                    unoptimized
+                                  />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                   <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-bold text-gray-900">
                                     {i + 1}
