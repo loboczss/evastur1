@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useMemo } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -85,6 +86,8 @@ export default function PackageModal({ open, onClose, data }: Props) {
 
   const prev = () => setIdx((i) => (i - 1 + max) % max);
   const next = () => setIdx((i) => (i + 1) % max);
+  const locationLabel = data.local?.trim() || 'Destino paradisíaco';
+  const durationLabel = typeof data.dias === 'number' ? `${data.dias} dias` : 'A definir';
 
   return (
     <AnimatePresence>
@@ -119,22 +122,25 @@ export default function PackageModal({ open, onClose, data }: Props) {
                   <div className="relative bg-gray-900 h-[380px] lg:h-[550px]">
                     {hasImgs ? (
                       <div className="relative w-full h-full">
-                        <AnimatePresence mode="wait" initial={false}>
-                          <motion.div
-                            key={idx}
-                            className="absolute inset-0"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.4, ease: 'easeInOut' }}
-                          >
-                            <img
-                              src={imgs[idx]}
-                              alt={`${data.nome} - Imagem ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </motion.div>
-                        </AnimatePresence>
+                          <AnimatePresence mode="wait" initial={false}>
+                            <motion.div
+                              key={idx}
+                              className="absolute inset-0"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.4, ease: 'easeInOut' }}
+                            >
+                              <Image
+                                src={imgs[idx]}
+                                alt={`${data.nome ?? 'Pacote'} - Imagem ${idx + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 1024px) 100vw, 60vw"
+                                priority={idx === 0}
+                              />
+                            </motion.div>
+                          </AnimatePresence>
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
 
@@ -211,9 +217,7 @@ export default function PackageModal({ open, onClose, data }: Props) {
                         <div className="p-1.5 rounded-lg bg-pink-100">
                           <MapPin className="w-4 h-4 text-pink-600" />
                         </div>
-                        <span className="text-sm font-semibold">
-                          {(data as any).local || 'Destino paradisíaco'}
-                        </span>
+                        <span className="text-sm font-semibold">{locationLabel}</span>
                       </div>
 
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-sm font-bold shadow-lg">
@@ -250,9 +254,7 @@ export default function PackageModal({ open, onClose, data }: Props) {
                             </div>
                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Duração</span>
                           </div>
-                          <div className="text-xl font-black text-gray-900">
-                            {typeof (data as any).dias === 'number' ? `${(data as any).dias} dias` : 'A definir'}
-                          </div>
+                          <div className="text-xl font-black text-gray-900">{durationLabel}</div>
                         </div>
 
                         <div className="p-4 rounded-xl bg-white border-2 border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all">
