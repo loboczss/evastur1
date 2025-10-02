@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { ArrowRight, Plane, Hotel, Ship, MapPin, Sparkles, TicketPercent, Clock, Star, Users, Shield, ChevronRight } from 'lucide-react';
 import { usePackages } from '@/hooks/usePackages';
 import type { PackageDTO } from '@/types/package';
+import PackageModal from '@/components/PackageModal';
 
 const HeroSearch = dynamic(() => import('@/components/HeroSearch'), { ssr: false });
 
@@ -43,6 +44,18 @@ export default function HomePage() {
 
   const { packages: pacotes, loading, error } = usePackages();
   const preview: PackageDTO[] = useMemo(() => (pacotes || []).slice(0, 6), [pacotes]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentPackage, setCurrentPackage] = useState<PackageDTO | null>(null);
+
+  const openPackage = useCallback((pkg: PackageDTO) => {
+    setCurrentPackage(pkg);
+    setModalOpen(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    setCurrentPackage(null);
+  }, []);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 text-gray-900">
@@ -311,10 +324,18 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
-                  className="group relative"
+                  className="group relative cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openPackage(p)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openPackage(p);
+                    }
+                  }}
                 >
-                  <Link href={`/pacotes/${p.id}`}>
-                    <div className="relative h-full bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                  <div className="relative h-full bg-white rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
                       {/* Image Container */}
                       <div className="relative h-56 overflow-hidden">
                         {capa ? (
@@ -382,7 +403,6 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-                  </Link>
                 </motion.article>
               );
             })}
@@ -468,6 +488,8 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
+
+      <PackageModal open={modalOpen} onClose={closeModal} data={currentPackage} />
     </main>
   );
 }
