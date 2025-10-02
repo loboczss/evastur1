@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const connectionString =
@@ -116,7 +116,107 @@ async function main() {
     create: { userId: superUser.id, roleId: superadmin.id },
   });
 
-  console.log('✅ Seed concluído: roles & permissions + superadmin prontos.');
+  console.log('✅ Roles e permissões atualizados e superadmin pronto.');
+
+  /* ========= 5) Pacotes de exemplo ========= */
+  type PackageSeed = {
+    title: string;
+    slug: string;
+    description: string;
+    price: string;
+    startDate: Date;
+    endDate: Date;
+    days: number;
+    location: string;
+    images: string[];
+  };
+
+  const packagesSeed: PackageSeed[] = [
+    {
+      title: 'Paris Romântica',
+      slug: 'paris-romantica',
+      description:
+        'Sete noites em Paris com city tour completo, passeio pelo Rio Sena e visita guiada ao Louvre. Hospedagem em hotel 4 estrelas com café da manhã incluso.',
+      price: '7999.90',
+      startDate: new Date('2024-11-05'),
+      endDate: new Date('2024-11-12'),
+      days: 7,
+      location: 'Paris, França',
+      images: [
+        'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1920&q=80',
+      ],
+    },
+    {
+      title: 'Nordeste Essencial',
+      slug: 'nordeste-essencial',
+      description:
+        'Descubra os paraísos de Maceió e Maragogi com passeios às piscinas naturais, buggy nas dunas e experiência gastronômica regional. Inclui aéreo e traslados.',
+      price: '3899.00',
+      startDate: new Date('2024-10-18'),
+      endDate: new Date('2024-10-25'),
+      days: 7,
+      location: 'Maceió & Maragogi, Brasil',
+      images: [
+        'https://images.unsplash.com/photo-1526402460759-99adb65ab148?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1496412705862-e0088f16f791?auto=format&fit=crop&w=1920&q=80',
+      ],
+    },
+    {
+      title: 'Aventura Andina',
+      slug: 'aventura-andina',
+      description:
+        'Experiência pelos Andes com passagem por Cusco, Valle Sagrado e Machu Picchu. Guia em português e ingressos inclusos. Perfeito para viajantes exploradores.',
+      price: '5299.50',
+      startDate: new Date('2024-09-07'),
+      endDate: new Date('2024-09-14'),
+      days: 7,
+      location: 'Cusco & Machu Picchu, Peru',
+      images: [
+        'https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1533636721434-0e2d61030955?auto=format&fit=crop&w=1920&q=80',
+      ],
+    },
+  ];
+
+  for (const pkg of packagesSeed) {
+    await prisma.package.upsert({
+      where: { slug: pkg.slug },
+      update: {
+        title: pkg.title,
+        description: pkg.description,
+        price: new Prisma.Decimal(pkg.price),
+        startDate: pkg.startDate,
+        endDate: pkg.endDate,
+        days: pkg.days,
+        location: pkg.location,
+        isActive: true,
+        images: {
+          deleteMany: {},
+          create: pkg.images.map((url, index) => ({ url, order: index })),
+        },
+      },
+      create: {
+        title: pkg.title,
+        slug: pkg.slug,
+        description: pkg.description,
+        price: new Prisma.Decimal(pkg.price),
+        startDate: pkg.startDate,
+        endDate: pkg.endDate,
+        days: pkg.days,
+        location: pkg.location,
+        isActive: true,
+        images: {
+          create: pkg.images.map((url, index) => ({ url, order: index })),
+        },
+      },
+    });
+  }
+
+  console.log('✅ Seed concluído: pacotes de exemplo disponíveis.');
 }
 
 main()
