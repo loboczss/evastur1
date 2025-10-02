@@ -3,15 +3,39 @@ import { PrismaClient } from '@prisma/client';
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 const resolveConnectionString = () => {
-  const connection =
-    process.env.DATABASE_URL ??
-    process.env.POSTGRES_PRISMA_URL ??
-    process.env.POSTGRES_URL ??
-    process.env.POSTGRES_URL_NON_POOLING ??
-    process.env.DIRECT_URL ??
-    process.env.POSTGRES_DATABASE_URL;
+  const envConnections = [
+    { key: 'DATABASE_URL', value: process.env.DATABASE_URL },
+    { key: 'POSTGRES_PRISMA_URL', value: process.env.POSTGRES_PRISMA_URL },
+    { key: 'POSTGRES_URL', value: process.env.POSTGRES_URL },
+    { key: 'POSTGRES_URL_NON_POOLING', value: process.env.POSTGRES_URL_NON_POOLING },
+    { key: 'DIRECT_URL', value: process.env.DIRECT_URL },
+    { key: 'POSTGRES_DATABASE_URL', value: process.env.POSTGRES_DATABASE_URL },
+  ] as const;
 
-  return connection;
+  const connection = envConnections.find(({ value }) => Boolean(value));
+
+  if (!connection) {
+    return undefined;
+  }
+
+  const { key, value } = connection;
+
+  if (value?.startsWith('prisma://')) {
+    const directFallback =
+      process.env.DIRECT_URL ?? process.env.POSTGRES_URL_NON_POOLING ?? process.env.POSTGRES_DATABASE_URL;
+
+    if (directFallback) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(
+          `${key} aponta para o Prisma Accelerate. Usando DIRECT_URL como fallback para conexões locais.`,
+        );
+      }
+
+      return directFallback;
+    }
+  }
+
+  return value;
 };
 
 const getOrCreatePrismaClient = () => {
