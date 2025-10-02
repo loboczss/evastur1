@@ -3,10 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL") 
-  directUrl  = env("DIRECT_URL")     
-
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 /**
@@ -105,7 +104,7 @@ model Package {
   title       String
   slug        String         @unique
   description String?
-  price       Decimal?       @db.Decimal(12, 2) // 💰 currency com 2 casas
+  price       Decimal?
   startDate   DateTime?
   endDate     DateTime?
   days        Int?

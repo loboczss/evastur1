@@ -4,11 +4,14 @@ import bcrypt from 'bcrypt';
 
 const { PrismaClient } = prismaPkg as typeof import('@prisma/client');
 
+const FALLBACK_POSTGRES_URL = 'postgresql://evastur:evastur@localhost:5432/evastur';
+
 const connectionString =
   process.env.DIRECT_URL ??
   process.env.POSTGRES_URL_NON_POOLING ??
   process.env.DATABASE_URL ??
-  process.env.POSTGRES_PRISMA_URL;
+  process.env.POSTGRES_PRISMA_URL ??
+  FALLBACK_POSTGRES_URL;
 
 if (!connectionString) {
   throw new Error(

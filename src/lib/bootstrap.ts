@@ -1,51 +1,32 @@
-import 'dotenv/config';
-import { PrismaClient, Prisma } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { prisma } from './prisma';
 
-const FALLBACK_POSTGRES_URL = 'postgresql://evastur:evastur@localhost:5432/evastur';
+const permissionsSeed: Array<{ key: string; description?: string }> = [
+  { key: 'users.read', description: 'Listar usuários' },
+  { key: 'users.write', description: 'Criar/editar usuários e papéis do usuário' },
+  { key: 'users.delete', description: 'Excluir usuários' },
+  { key: 'roles.read', description: 'Listar papéis' },
+  { key: 'roles.write', description: 'Criar/editar papéis' },
+  { key: 'roles.delete', description: 'Excluir papéis' },
+  { key: 'permissions.read', description: 'Listar permissões' },
+  { key: 'permissions.write', description: 'Criar/editar permissões' },
+  { key: 'permissions.delete', description: 'Excluir permissões' },
+];
 
-const connectionString =
-  process.env.DIRECT_URL ??
-  process.env.POSTGRES_URL_NON_POOLING ??
-  process.env.DATABASE_URL ??
-  process.env.POSTGRES_PRISMA_URL ??
-  FALLBACK_POSTGRES_URL;
+const globalBootstrap = globalThis as unknown as {
+  __evasturBootstrapPromise?: Promise<void>;
+};
 
-if (!connectionString) {
-  throw new Error(
-    'Não encontramos uma string de conexão para o banco. Defina DIRECT_URL, POSTGRES_URL_NON_POOLING ou DATABASE_URL antes de rodar o seed.',
-  );
-}
-
-const prisma = new PrismaClient({ datasources: { db: { url: connectionString } } });
-
-async function main() {
-  /* ========= 1) Permissões base ========= */
-  // Você pode expandir depois (ex: packages.read/write/delete, etc.)
-  const permissionsSeed: Array<{ key: string; description?: string }> = [
-    { key: 'users.read',   description: 'Listar usuários' },
-    { key: 'users.write',  description: 'Criar/editar usuários e papéis do usuário' },
-    { key: 'users.delete', description: 'Excluir usuários' },
-
-    { key: 'roles.read',   description: 'Listar papéis' },
-    { key: 'roles.write',  description: 'Criar/editar papéis' },
-    { key: 'roles.delete', description: 'Excluir papéis' },
-
-    { key: 'permissions.read',  description: 'Listar permissões' },
-    { key: 'permissions.write', description: 'Criar/editar permissões' },
-    { key: 'permissions.delete',description: 'Excluir permissões' },
-  ];
-
-  for (const p of permissionsSeed) {
+async function bootstrapOnce() {
+  for (const permission of permissionsSeed) {
     await prisma.permission.upsert({
-      where: { key: p.key },
-      update: { description: p.description },
-      create: p,
+      where: { key: permission.key },
+      update: { description: permission.description },
+      create: permission,
     });
   }
 
-  /* ========= 2) Papéis ========= */
   const comum = await prisma.role.upsert({
     where: { name: 'comum' },
     update: {},
@@ -64,17 +45,16 @@ async function main() {
     create: { name: 'superadmin', description: 'Controle total do sistema' },
   });
 
-  /* ========= 3) Vincular permissões aos papéis ========= */
   const allPerms = await prisma.permission.findMany({ select: { id: true, key: true } });
 
-  // Admin: gerencia usuários (CRUD), pode ver papéis e permissões
   const adminPermKeys = new Set([
-    'users.read', 'users.write', 'users.delete',
+    'users.read',
+    'users.write',
+    'users.delete',
     'roles.read',
     'permissions.read',
   ]);
 
-  // Limpa e vincula para ADMIN
   await prisma.rolePermission.deleteMany({ where: { roleId: admin.id } });
   for (const perm of allPerms) {
     if (adminPermKeys.has(perm.key)) {
@@ -86,7 +66,6 @@ async function main() {
     }
   }
 
-  // SUPERADMIN: todas as permissões
   await prisma.rolePermission.deleteMany({ where: { roleId: superadmin.id } });
   for (const perm of allPerms) {
     await prisma.rolePermission.upsert({
@@ -96,33 +75,10 @@ async function main() {
     });
   }
 
-  // COMUM: nenhuma permissão explícita por padrão (aplique permissões de leitura mínimas se quiser)
   await prisma.rolePermission.deleteMany({ where: { roleId: comum.id } });
 
-  /* ========= 4) Superadmin inicial ========= */
-  const email = process.env.ADMIN_EMAIL ?? 'admin@evastur.com';
-  const plain = process.env.ADMIN_PASSWORD ?? 'admin123';
-  if (!process.env.ADMIN_PASSWORD) {
-    console.warn('⚠️  ADMIN_PASSWORD não definido no .env — usando senha padrão "admin123" (apenas DEV).');
-  }
-  const passwordHash = await bcrypt.hash(plain, 10);
-
-  const superUser = await prisma.user.upsert({
-    where: { email },
-    update: { name: 'Superadmin', isActive: true, passwordHash },
-    create: { name: 'Superadmin', email, isActive: true, passwordHash },
-  });
-
-  // Garante VÍNCULO do user → superadmin
-  await prisma.userRole.upsert({
-    where: { userId_roleId: { userId: superUser.id, roleId: superadmin.id } },
-    update: {},
-    create: { userId: superUser.id, roleId: superadmin.id },
-  });
-
-  /* ========= 5) Pacotes de demonstração ========= */
-  const packageCount = await prisma.package.count();
-  if (packageCount === 0) {
+  const pkgCount = await prisma.package.count();
+  if (pkgCount === 0) {
     const demoPackages = [
       {
         title: 'Foz do Iguaçu Essencial',
@@ -185,17 +141,17 @@ async function main() {
         },
       });
     }
-    console.log('📦 Pacotes de demonstração criados.');
   }
-
-  console.log('✅ Seed concluído: roles, permissões, superadmin e pacotes prontos.');
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Seed falhou:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+export function ensureBootstrap() {
+  if (!globalBootstrap.__evasturBootstrapPromise) {
+    globalBootstrap.__evasturBootstrapPromise = bootstrapOnce().catch((err) => {
+      console.error('Erro ao inicializar dados básicos', err);
+      globalBootstrap.__evasturBootstrapPromise = undefined;
+      throw err;
+    });
+  }
+
+  return globalBootstrap.__evasturBootstrapPromise;
+}

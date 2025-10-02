@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { ensureBootstrap } from '@/lib/bootstrap';
 
 /**
  * POST /api/auth/register
@@ -11,6 +12,8 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: Request) {
   try {
     const { name, email, password, phone } = await req.json();
+
+    await ensureBootstrap();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -35,7 +38,7 @@ export async function POST(req: Request) {
     const commonRole = await prisma.role.findUnique({ where: { name: 'comum' } });
     if (!commonRole) {
       return NextResponse.json(
-        { error: 'Papel "comum" não encontrado. Rode o seed novamente.' },
+        { error: 'Não foi possível preparar os papéis padrão. Tente novamente em instantes.' },
         { status: 500 }
       );
     }

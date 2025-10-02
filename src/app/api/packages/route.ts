@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ensureBootstrap } from '@/lib/bootstrap';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -8,6 +9,8 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 
 export async function GET() {
   try {
+    await ensureBootstrap();
+
     const packages = await prisma.package.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'desc' },
