@@ -1,8 +1,22 @@
+import 'dotenv/config';
 import prismaPkg from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const { PrismaClient } = prismaPkg as typeof import('@prisma/client');
-const prisma = new PrismaClient();
+
+const connectionString =
+  process.env.DIRECT_URL ??
+  process.env.POSTGRES_URL_NON_POOLING ??
+  process.env.DATABASE_URL ??
+  process.env.POSTGRES_PRISMA_URL;
+
+if (!connectionString) {
+  throw new Error(
+    'Não encontramos uma string de conexão para o banco. Defina DIRECT_URL, POSTGRES_URL_NON_POOLING ou DATABASE_URL antes de criar o superadmin.',
+  );
+}
+
+const prisma = new PrismaClient({ datasources: { db: { url: connectionString } } });
 
 async function main() {
   const email = "admin@evastur.com";
