@@ -2,23 +2,36 @@ import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-const connectionString =
+const resolveConnectionString = () =>
   process.env.POSTGRES_PRISMA_URL ??
   process.env.DATABASE_URL ??
   process.env.POSTGRES_URL ??
   process.env.POSTGRES_URL_NON_POOLING;
 
-if (!connectionString) {
-  throw new Error(
-    'DATABASE_URL (ou POSTGRES_PRISMA_URL) não foi definido. Configure as variáveis de ambiente do banco antes de iniciar o app.',
-  );
-}
+const getOrCreatePrismaClient = () => {
+  const connectionString = resolveConnectionString();
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    datasources: { db: { url: connectionString } },
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
+  if (!connectionString) {
+    throw new Error(
+      'DATABASE_URL (ou POSTGRES_PRISMA_URL) não foi definido. Configure as variáveis de ambiente do banco antes de iniciar o app.',
+    );
+  }
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = new PrismaClient({
+      datasources: { db: { url: connectionString } },
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
+  }
+
+  return globalForPrisma.prisma;
+};
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = getOrCreatePrismaClient();
+    const value = Reflect.get(client, prop, receiver);
+
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});
