@@ -32,13 +32,11 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Busca papel "comum"
-    const commonRole = await prisma.role.findUnique({ where: { name: 'comum' } });
-    if (!commonRole) {
-      return NextResponse.json(
-        { error: 'Papel "comum" não encontrado. Rode o seed novamente.' },
-        { status: 500 }
-      );
-    }
+    const commonRole = await prisma.role.upsert({
+      where: { name: 'comum' },
+      update: {},
+      create: { name: 'comum', description: 'Usuário padrão' },
+    });
 
     // Cria usuário e vincula papel "comum"
     const user = await prisma.user.create({
