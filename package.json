@@ -7,14 +7,23 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+
+
+    "prisma:validate": "dotenv -e .env -- prisma validate --schema=prisma/schema.prisma",
+    "db:migrate": "dotenv -e .env -- prisma migrate dev --schema=prisma/schema.prisma",
+    "db:seed": "dotenv -e .env -- prisma db seed",
+    "prisma:generate": "dotenv -e .env -- prisma generate --schema=prisma/schema.prisma",
+
+  
+    "postinstall": "prisma generate --schema=prisma/schema.prisma",
+
+  
+    "vercel-build": "prisma generate --schema=prisma/schema.prisma && prisma migrate deploy --schema=prisma/schema.prisma && next build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.16.3",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^3.0.2",             
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
@@ -24,18 +33,16 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "prisma": "^6.16.3",
     "tailwindcss": "^4",
     "ts-node": "^10",
     "typescript": "^5"
-  },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/seed.ts"
   }
 }

@@ -3,9 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL") 
+  directUrl  = env("DIRECT_URL")     
+
 }
 
 /**
@@ -21,6 +22,8 @@ model Lead {
   destination String?
   notes       String?
   createdAt   DateTime @default(now())
+
+  @@index([email]) // 🔹 ajuda nas consultas por email
 }
 
 /**
@@ -28,18 +31,19 @@ model Lead {
  * AUTH / RBAC
  * ===========================
  */
-
 model User {
   id           Int           @id @default(autoincrement())
   name         String
   email        String        @unique
   phone        String?
   isActive     Boolean       @default(true)
-  passwordHash String? // ← autenticacao (preenchido no cadastro)
+  passwordHash String?       // ← senha hash
   roles        UserRole[]
   sessions     AuthSession[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([isActive])
 }
 
 model Role {
@@ -91,6 +95,9 @@ model AuthSession {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   expiresAt DateTime
+
+  @@index([userId])
+  @@index([expiresAt]) // 🔹 facilita job que limpa sessões expiradas
 }
 
 model Package {
@@ -98,7 +105,7 @@ model Package {
   title       String
   slug        String         @unique
   description String?
-  price       Decimal?
+  price       Decimal?       @db.Decimal(12, 2) // 💰 currency com 2 casas
   startDate   DateTime?
   endDate     DateTime?
   days        Int?
@@ -106,14 +113,20 @@ model Package {
   isActive    Boolean        @default(true)
   createdAt   DateTime       @default(now())
   images      PackageImage[]
+
+  @@index([isActive])
+  @@index([startDate, endDate])
 }
 
 model PackageImage {
   id        Int     @id @default(autoincrement())
   url       String
   order     Int     @default(0)
-  package   Package @relation(fields: [packageId], references: [id])
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId Int
+
+  @@index([packageId])
+  @@index([order])
 }
 
 model EditableContent {
@@ -125,4 +138,5 @@ model EditableContent {
   updatedAt DateTime @updatedAt
 
   @@unique([path, key])
+  @@index([path])
 }

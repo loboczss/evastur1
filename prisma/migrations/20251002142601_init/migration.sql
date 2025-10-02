@@ -79,7 +79,7 @@ CREATE TABLE "Package" (
     "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "description" TEXT,
-    "price" DECIMAL(65,30),
+    "price" DECIMAL(12,2),
     "startDate" TIMESTAMP(3),
     "endDate" TIMESTAMP(3),
     "days" INTEGER,
@@ -113,7 +113,13 @@ CREATE TABLE "EditableContent" (
 );
 
 -- CreateIndex
+CREATE INDEX "Lead_email_idx" ON "Lead"("email");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "User_isActive_idx" ON "User"("isActive");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Role_name_key" ON "Role"("name");
@@ -128,7 +134,28 @@ CREATE INDEX "UserRole_roleId_idx" ON "UserRole"("roleId");
 CREATE INDEX "RolePermission_permissionId_idx" ON "RolePermission"("permissionId");
 
 -- CreateIndex
+CREATE INDEX "AuthSession_userId_idx" ON "AuthSession"("userId");
+
+-- CreateIndex
+CREATE INDEX "AuthSession_expiresAt_idx" ON "AuthSession"("expiresAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Package_slug_key" ON "Package"("slug");
+
+-- CreateIndex
+CREATE INDEX "Package_isActive_idx" ON "Package"("isActive");
+
+-- CreateIndex
+CREATE INDEX "Package_startDate_endDate_idx" ON "Package"("startDate", "endDate");
+
+-- CreateIndex
+CREATE INDEX "PackageImage_packageId_idx" ON "PackageImage"("packageId");
+
+-- CreateIndex
+CREATE INDEX "PackageImage_order_idx" ON "PackageImage"("order");
+
+-- CreateIndex
+CREATE INDEX "EditableContent_path_idx" ON "EditableContent"("path");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "EditableContent_path_key_key" ON "EditableContent"("path", "key");
@@ -149,4 +176,4 @@ ALTER TABLE "RolePermission" ADD CONSTRAINT "RolePermission_permissionId_fkey" F
 ALTER TABLE "AuthSession" ADD CONSTRAINT "AuthSession_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PackageImage" ADD CONSTRAINT "PackageImage_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "PackageImage" ADD CONSTRAINT "PackageImage_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
