@@ -1,6 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import prismaPkg from '@prisma/client';
 import bcrypt from 'bcrypt';
 
+const { PrismaClient } = prismaPkg as typeof import('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
