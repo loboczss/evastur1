@@ -21,138 +21,18 @@ import {
   Ship,
   type LucideIcon,
 } from 'lucide-react';
+import { usePackages } from '@/hooks/usePackages';
+import { useCanManagePackages } from '@/hooks/useCanManagePackages';
+import AddPackageModal from '@/components/packages/AddPackageModal';
+import PackageModal from '@/components/PackageModal';
+import type { PackageDTO } from '@/types/package';
 
-type TravelPackage = {
-  id: string;
-  nome: string;
-  local: string;
-  dias: number;
-  preco: string;
-  resumo: string;
-  dataIda: string;
-  dataVolta: string;
-  imagens: string[];
-  descricao?: string;
-};
-
-type UsePackagesResult = {
-  packages: TravelPackage[];
-  loading: boolean;
-  error: null;
-  removeLocal: (id: TravelPackage['id']) => void;
-};
-
-// Mock dos hooks - substitua pelos seus hooks reais
-const usePackages = (): UsePackagesResult => {
-  const [packages, setPackages] = useState<TravelPackage[]>([
-    {
-      id: '1',
-      nome: 'Cancún Premium',
-      local: 'Cancún, México',
-      dias: 7,
-      preco: 'R$ 4.500',
-      resumo: 'Resort all-inclusive com praia paradisíaca e gastronomia internacional.',
-      dataIda: '2025-03-15',
-      dataVolta: '2025-03-22',
-      imagens: ['https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80']
-    },
-    {
-      id: '2',
-      nome: 'Paris Romântico',
-      local: 'Paris, França',
-      dias: 10,
-      preco: 'R$ 8.900',
-      resumo: 'Tour completo pela cidade luz com guia exclusivo e hospedagem boutique.',
-      dataIda: '2025-04-10',
-      dataVolta: '2025-04-20',
-      imagens: ['https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80']
-    },
-    {
-      id: '3',
-      nome: 'Caribe Incrível',
-      local: 'Punta Cana, República Dominicana',
-      dias: 8,
-      preco: 'R$ 5.200',
-      resumo: 'Resort de luxo com atividades aquáticas e entretenimento para toda família.',
-      dataIda: '2025-05-05',
-      dataVolta: '2025-05-13',
-      imagens: ['https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80']
-    }
-  ]);
-
-  const removeLocal = (id: TravelPackage['id']) => {
-    setPackages((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  return {
-    packages,
-    loading: false,
-    error: null,
-    removeLocal,
-  };
-};
-
-const useCanManagePackages = (): boolean => false;
-
-type PackageModalProps = {
-  open: boolean;
-  onClose: () => void;
-  data: TravelPackage | null;
-};
-
-const PackageModal: FC<PackageModalProps> = ({ open, onClose, data }) => {
-  if (!open || !data) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto"
-        onClick={(e: ReactMouseEvent<HTMLDivElement>) => e.stopPropagation()}
-      >
-        <div className="relative h-64">
-          {data.imagens?.[0] ? (
-            <Image
-              src={data.imagens[0]}
-              alt={data.nome}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 640px"
-              priority
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500">
-              Sem imagem disponível
-            </div>
-          )}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center hover:bg-white transition"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="p-8">
-          <h2 className="text-3xl font-black text-gray-900">{data.nome}</h2>
-          <p className="text-gray-600 mt-2">{data.local}</p>
-          <p className="text-gray-700 mt-4">{data.resumo}</p>
-          <div className="mt-6 flex gap-4">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Calendar className="w-5 h-5" />
-              <span>{data.dias} dias</span>
-            </div>
-            <div className="text-2xl font-black text-purple-600">{data.preco}</div>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
-
-const AddPackageButton: FC = () => (
-  <button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition">
+const AddPackageButton: FC<{ onClick: () => void }> = ({ onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition"
+  >
     + Novo Pacote
   </button>
 );
@@ -176,8 +56,9 @@ export default function PacotesPage() {
   const canManage = useCanManagePackages();
 
   const [open, setOpen] = useState<boolean>(false);
-  const [current, setCurrent] = useState<TravelPackage | null>(null);
-  const [deletingId, setDeletingId] = useState<TravelPackage['id'] | null>(null);
+  const [current, setCurrent] = useState<PackageDTO | null>(null);
+  const [deletingId, setDeletingId] = useState<PackageDTO['id'] | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
 
   const { scrollYProgress } = useScroll();
   const yHero = useTransform(scrollYProgress, [0, 0.4], [0, -100]);
@@ -249,17 +130,20 @@ export default function PacotesPage() {
   const goPrev = () => setHlIndex((i) => (i - 1 + HIGHLIGHTS.length) % HIGHLIGHTS.length);
   const goNext = () => setHlIndex((i) => (i + 1) % HIGHLIGHTS.length);
 
-  const abrir = (pkg: TravelPackage) => {
+  const abrir = (pkg: PackageDTO) => {
     setCurrent(pkg);
     setOpen(true);
   };
 
-  const excluir = async (pkg: TravelPackage) => {
+  const excluir = async (pkg: PackageDTO) => {
     if (!canManage) return;
     if (!confirm(`Deseja realmente excluir o pacote "${pkg.nome}"?`)) return;
     setDeletingId(pkg.id);
     try {
-      const res = await fetch(`/api/admin/packages/${pkg.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/packages/${pkg.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Falha ao excluir');
       removeLocal(pkg.id);
       if (current?.id === pkg.id) {
@@ -379,13 +263,15 @@ export default function PacotesPage() {
                 </motion.div>
               </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-              >
-                <AddPackageButton />
-              </motion.div>
+              {canManage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                >
+                  <AddPackageButton onClick={() => setAddModalOpen(true)} />
+                </motion.div>
+              )}
             </div>
           </div>
         </div>
@@ -612,6 +498,7 @@ export default function PacotesPage() {
       </section>
 
       <PackageModal open={open} onClose={() => setOpen(false)} data={current} />
+      <AddPackageModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
     </main>
   );
 }
