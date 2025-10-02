@@ -20,6 +20,9 @@
   
     "vercel-build": "prisma generate --schema=prisma/schema.prisma && prisma migrate deploy --schema=prisma/schema.prisma && next build"
   },
+  "prisma": {
+    "seed": "ts-node --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' prisma/seed.ts"
+  },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.16.3",
