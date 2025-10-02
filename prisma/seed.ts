@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const connectionString =
@@ -188,7 +188,7 @@ async function main() {
       update: {
         title: pkg.title,
         description: pkg.description,
-        price: new Prisma.Decimal(pkg.price),
+        price: pkg.price,
         startDate: pkg.startDate,
         endDate: pkg.endDate,
         days: pkg.days,
@@ -203,7 +203,7 @@ async function main() {
         title: pkg.title,
         slug: pkg.slug,
         description: pkg.description,
-        price: new Prisma.Decimal(pkg.price),
+        price: pkg.price,
         startDate: pkg.startDate,
         endDate: pkg.endDate,
         days: pkg.days,
@@ -215,6 +215,7 @@ async function main() {
       },
     });
   }
+
 
   console.log('✅ Seed concluído: pacotes de exemplo disponíveis.');
 }
