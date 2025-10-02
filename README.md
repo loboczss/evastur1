@@ -9,7 +9,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
    - `DATABASE_URL` → cole o valor de `POSTGRES_PRISMA_URL` (string com pooling). É usada pelo app em produção.
    - `DIRECT_URL` → cole o valor de `POSTGRES_URL_NON_POOLING` (string direta). É usada para migrações/seed.
 3. Opcional: ajuste `ADMIN_EMAIL` e `ADMIN_PASSWORD` para controlar o usuário criado pelo seed.
-4. Execute as migrações com `npx prisma migrate deploy` (produção) ou `npm run db:migrate` (dev).
+4. Execute as migrações com `npx prisma migrate deploy` (produção) ou `npm run db:migrate` (dev). Esse passo também dispara o `prisma db seed`, garantindo que o papel **superadmin** e o usuário inicial sejam recriados automaticamente após resets do banco.
 
 Depois disso, você já pode rodar o servidor de desenvolvimento localmente apontando para o banco online.
 
