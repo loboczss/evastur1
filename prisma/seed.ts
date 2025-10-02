@@ -1,7 +1,20 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const connectionString =
+  process.env.DIRECT_URL ??
+  process.env.POSTGRES_URL_NON_POOLING ??
+  process.env.DATABASE_URL ??
+  process.env.POSTGRES_PRISMA_URL;
+
+if (!connectionString) {
+  throw new Error(
+    'Não encontramos uma string de conexão para o banco. Defina DIRECT_URL, POSTGRES_URL_NON_POOLING ou DATABASE_URL antes de rodar o seed.',
+  );
+}
+
+const prisma = new PrismaClient({ datasources: { db: { url: connectionString } } });
 
 async function main() {
   /* ========= 1) Permissões base ========= */

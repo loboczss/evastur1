@@ -2,6 +2,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+## Configurando o banco de dados (Prisma + Vercel)
+
+1. Crie um banco de dados online (ex.: [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)).
+2. No painel da Vercel, copie os valores de `POSTGRES_PRISMA_URL` e `POSTGRES_URL_NON_POOLING` e defina-os nas variáveis do projeto:
+   - `DATABASE_URL` → cole o valor de `POSTGRES_PRISMA_URL` (string com pooling). É usada pelo app em produção.
+   - `DIRECT_URL` → cole o valor de `POSTGRES_URL_NON_POOLING` (string direta). É usada para migrações/seed.
+3. Opcional: ajuste `ADMIN_EMAIL` e `ADMIN_PASSWORD` para controlar o usuário criado pelo seed.
+4. Execute as migrações com `npx prisma migrate deploy` (produção) ou `npm run db:migrate` (dev).
+
+Depois disso, você já pode rodar o servidor de desenvolvimento localmente apontando para o banco online.
+
 First, run the development server:
 
 ```bash
